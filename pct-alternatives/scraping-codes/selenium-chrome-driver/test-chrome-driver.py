@@ -9,7 +9,7 @@ options.binary_location = "chrome-mac-arm64/Google Chrome for Testing.app/Conten
 options.add_argument("--no-first-run")
 options.add_argument("--no-default-browser-check")
 options.add_argument("--user-data-dir=/tmp/selenium-profile")
-# options.add_argument("--headless=new") # comment this out to see selenium window opened
+options.add_argument("--headless=new") # comment this out to see selenium window opened
 
 service = Service("chromedriver-mac-arm64/chromedriver")
 driver = webdriver.Chrome(service=service, options=options)

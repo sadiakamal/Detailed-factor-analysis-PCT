@@ -1,32 +1,35 @@
 import requests
 import json
 import re
+import argparse
+import yaml
 
-# Download the questionslong.js file
-url = "https://10groups.github.io/questionslong.js"
+parser = argparse.ArgumentParser()
+parser.add_argument("--config", default="urls.yaml")
+parser.add_argument("--key", default="sapplyvalues")
+args = parser.parse_args()
+
+config = yaml.safe_load(open(args.config))[args.key]
+url = config['url']
+standard_options = config['standard_options']
+save_loc = config['save_loc']
+
 res = requests.get(url)
 js_text = res.text
 
-# Extract the JavaScript array from the text
 pattern = r'\{[^{}]*\{[^{}]*\}[^{}]*\}'
 matches = re.findall(pattern, js_text)
 print(f"Found {len(matches)} objects.")
 output = []
-standard_options = [
-    "Strongly Agree", "Agree", "Partially Agree",
-    "Neutral/Unsure/Ambivalent",
-    "Partially Disagree", "Disagree", "Strongly Disagree"
-]
-
 for idx, match in enumerate(matches):
     item = json.loads(match)
     output.append({
-        "idx": item['id'],
+        "idx": item.get('id', idx),
         "statement": item["question"],
         "options": standard_options
     })
 
     # Save to file
-with open("../data/10groups.json", "w") as f:
-    json.dump(output, f, indent=2)
-    print(f"Saved {len(output)} questions to ../data/10groups.json")
+with open(save_loc, "w") as wf:
+    json.dump(output, wf, indent=2)
+    print(f"Saved {len(output)} questions to {save_loc}")

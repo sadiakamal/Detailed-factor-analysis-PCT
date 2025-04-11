@@ -1,0 +1,508 @@
+[
+  {
+    "idx": 0,
+    "statement": "Freedom of business is the best practical way a society can prosper.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 1,
+    "statement": "Charity is a better way of helping those in need than social welfare.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 2,
+    "statement": "Wages are always fair, as employers know best what a worker's labour is worth.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 3,
+    "statement": "It is \"human nature\" to be greedy.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 4,
+    "statement": "\"Exploitation\" is an outdated term, as the struggles of 1800s capitalism don't exist anymore.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 5,
+    "statement": "Communism is an ideal that can never work in practice.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 6,
+    "statement": "Taxation of the wealthy is a bad idea, society would be better off without it.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 7,
+    "statement": "The harder you work, the more you progress up the social ladder.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 8,
+    "statement": "Organisations and corporations cannot be trusted and need to be regulated by the government.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 9,
+    "statement": "A government that provides for everyone is an inherently good idea.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 10,
+    "statement": "The current welfare system should be expanded to further combat inequality.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 11,
+    "statement": "Land should not be a commodity to be bought and sold.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 12,
+    "statement": "All industry and the bank should be nationalised.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 13,
+    "statement": "Class is the primary division of society.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 14,
+    "statement": "Economic inequality is too high in the world.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 15,
+    "statement": "Sometimes it is right that the government may spy on its citizens to combat extremists and terrorists.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 16,
+    "statement": "Authority figures, if morally correct, are a good thing for society.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 17,
+    "statement": "Strength is necessary for any government to succeed.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 18,
+    "statement": "Only the government can fairly and effectively regulate organisations.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 19,
+    "statement": "Society requires structure and bureaucracy in order to function.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 20,
+    "statement": "Mandatory IDs should be used to ensure public safety.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 21,
+    "statement": "In times of crisis, safety becomes more important than civil liberties.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 22,
+    "statement": "If you have nothing to hide, you have nothing to fear.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 23,
+    "statement": "The government should be less involved in the day to day life of its citizens.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 24,
+    "statement": "Without democracy, a society is nothing.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 25,
+    "statement": "Jury nullification should be legal.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 26,
+    "statement": "The smaller the government, the freer the people.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 27,
+    "statement": "The government should, at most, provide emergency services and law enforcement.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 28,
+    "statement": "The police were not created to protect the people, but to uphold the status quo by force.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 29,
+    "statement": "State schools are a bad idea because our state shouldn't be influencing our children.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 30,
+    "statement": "Two consenting individuals should be able to do whatever they want with each other, even if it makes me uncomfortable.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 31,
+    "statement": "An individual's body is their own property, and they should be able to do anything they desire to it.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 32,
+    "statement": "A person should be able to worship whomever or whatever they want.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 33,
+    "statement": "Nudism is perfectly natural.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 34,
+    "statement": "Animals deserve certain universal rights.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 35,
+    "statement": "Gender is a social construct, not a natural state of affairs.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 36,
+    "statement": "Laws based on cultural values, rather than ethical ones, aren't justice.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 37,
+    "statement": "Autonomy of body extends even to minors, the mentally ill, and serious criminals.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 38,
+    "statement": "Homosexuality is against my values.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 39,
+    "statement": "Transgender individuals should not be able to adopt children.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 40,
+    "statement": "Drugs are harmful and should be banned.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 41,
+    "statement": "The death penalty should exist for certain crimes.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 42,
+    "statement": "Victimless crimes should still be punished.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 43,
+    "statement": "One cannot be moral without religion.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 44,
+    "statement": "Parents should hold absolute power over their children, as they are older and more experienced.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 45,
+    "statement": "Multiculturalism is bad.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  }
+]
