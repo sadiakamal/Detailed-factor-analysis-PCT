@@ -1,0 +1,31 @@
+sapplyvalues:
+  save_loc: ../data/sapplyvalues.json
+  url: https://sapplyvalues.github.io/questions.js
+  standard_options:
+    - Strongly Agree
+    - Agree
+    - Neutral/Unsure
+    - Disagree
+    - Strongly Disagree
+
+10groups:
+  save_loc: ../data/10groups.json
+  url: https://10groups.github.io/questionslong.js
+  standard_options:
+    - Strongly Agree
+    - Agree
+    - Partially Agree
+    - Neutral/Unsure/Ambivalent
+    - Partially Disagree
+    - Disagree
+    - Strongly Disagree
+
+8values:
+  save_loc: ../data/8values.json
+  url: https://8values.github.io/questions.js
+  standard_options:
+    - Strongly Agree
+    - Agree
+    - Neutral/Unsure
+    - Disagree
+    - Strongly Disagree

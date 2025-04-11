@@ -1,0 +1,772 @@
+[
+  {
+    "idx": 0,
+    "statement": "Oppression by corporations is more of a concern than oppression by governments.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 1,
+    "statement": "It is necessary for the government to intervene in the economy to protect consumers.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 2,
+    "statement": "The freer the markets, the freer the people.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 3,
+    "statement": "It is better to maintain a balanced budget than to ensure welfare for all citizens.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 4,
+    "statement": "Publicly-funded research is more beneficial to the people than leaving it to the market.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 5,
+    "statement": "Tariffs on international trade are important to encourage local production.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 6,
+    "statement": "From each according to his ability, to each according to his needs.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 7,
+    "statement": "It would be best if social programs were abolished in favor of private charity.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 8,
+    "statement": "Taxes should be increased on the rich to provide for the poor.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 9,
+    "statement": "Inheritance is a legitimate form of wealth.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 10,
+    "statement": "Basic utilities like roads and electricity should be publicly owned.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 11,
+    "statement": "Government intervention is a threat to the economy.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 12,
+    "statement": "Those with a greater ability to pay should receive better healthcare.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 13,
+    "statement": "Quality education is a right of all people.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 14,
+    "statement": "The means of production should belong to the workers who use them.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 15,
+    "statement": "The United Nations should be abolished.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 16,
+    "statement": "Military action by our nation is often necessary to protect it.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 17,
+    "statement": "I support regional unions, such as the European Union.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 18,
+    "statement": "It is important to maintain our national sovereignty.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 19,
+    "statement": "A united world government would be beneficial to mankind.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 20,
+    "statement": "It is more important to retain peaceful relations than to further our strength.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 21,
+    "statement": "Wars do not need to be justified to other countries.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 22,
+    "statement": "Military spending is a waste of money.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 23,
+    "statement": "International aid is a waste of money.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 24,
+    "statement": "My nation is great.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 25,
+    "statement": "Research should be conducted on an international scale.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 26,
+    "statement": "Governments should be accountable to the international community.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 27,
+    "statement": "Even when protesting an authoritarian government, violence is not acceptable.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 28,
+    "statement": "My religious values should be spread as much as possible.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 29,
+    "statement": "Our nation's values should be spread as much as possible.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 30,
+    "statement": "It is very important to maintain law and order.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 31,
+    "statement": "The general populace makes poor decisions.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 32,
+    "statement": "Physician-assisted suicide should be legal.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 33,
+    "statement": "The sacrifice of some civil liberties is necessary to protect us from acts of terrorism.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 34,
+    "statement": "Government surveillance is necessary in the modern world.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 35,
+    "statement": "The very existence of the state is a threat to our liberty.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 36,
+    "statement": "Regardless of political opinions, it is important to side with your country.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 37,
+    "statement": "All authority should be questioned.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 38,
+    "statement": "A hierarchical state is best.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 39,
+    "statement": "It is important that the government follows the majority opinion, even if it is wrong.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 40,
+    "statement": "The stronger the leadership, the better.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 41,
+    "statement": "Democracy is more than a decision-making process.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 42,
+    "statement": "Environmental regulations are essential.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 43,
+    "statement": "A better world will come from automation, science, and technology.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 44,
+    "statement": "Children should be educated in religious or traditional values.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 45,
+    "statement": "Traditions are of no value on their own.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 46,
+    "statement": "Religion should play a role in government.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 47,
+    "statement": "Churches should be taxed the same way other institutions are taxed.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 48,
+    "statement": "Climate change is currently one of the greatest threats to our way of life.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 49,
+    "statement": "It is important that we work as a united world to combat climate change.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 50,
+    "statement": "Society was better many years ago than it is now.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 51,
+    "statement": "It is important that we maintain the traditions of our past.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 52,
+    "statement": "It is important that we think in the long term, beyond our lifespans.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 53,
+    "statement": "Reason is more important than maintaining our culture.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 54,
+    "statement": "Drug use should be legalized or decriminalized.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 55,
+    "statement": "Same-sex marriage should be legal.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 56,
+    "statement": "No cultures are superior to others.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 57,
+    "statement": "Sex outside marriage is immoral.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 58,
+    "statement": "If we accept migrants at all, it is important that they assimilate into our culture.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 59,
+    "statement": "Abortion should be prohibited in most or all cases.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 60,
+    "statement": "Gun ownership should be prohibited for those without a valid reason.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 61,
+    "statement": "I support single-payer, universal healthcare.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 62,
+    "statement": "Prostitution should be illegal.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 63,
+    "statement": "Maintaining family values is essential.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 64,
+    "statement": "To chase progress at all costs is dangerous.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 65,
+    "statement": "Genetic modification is a force for good, even on humans.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 66,
+    "statement": "We should open our borders to immigration.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 67,
+    "statement": "Governments should be as concerned about foreigners as they are about their own citizens.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 68,
+    "statement": "All people - regardless of factors like culture or sexuality - should be treated equally.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  },
+  {
+    "idx": 69,
+    "statement": "It is important that we further my group's goals above all others.",
+    "options": [
+      "Strongly Agree",
+      "Agree",
+      "Neutral/Unsure",
+      "Disagree",
+      "Strongly Disagree"
+    ]
+  }
+]
