@@ -35,6 +35,9 @@ from tqdm import tqdm
 from trl import SFTConfig, SFTTrainer
 import torch.nn.utils as nn_utils
 
+
+DEBUG = False
+
 # %%
 # wandbapi = '85595c51f7c336bde5ef27388389af039c574463'
 
@@ -46,8 +49,10 @@ login(token='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') # Rakib
 # %%
  # BitsAndBytesConfig int-4 config
 bnb_config = BitsAndBytesConfig(
-    load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16
-)
+    load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, llm_int8_enable_fp32_cpu_offload=True)
+# bnb_config = BitsAndBytesConfig(
+#     load_in_4bit=True,
+# )
 
 lora_config = LoraConfig(
     r = 16, # the dimension of the low-rank matrices
@@ -85,6 +90,7 @@ def load_model(model_name, bnb_config):
     model_name,
     quantization_config=bnb_config,
     device_map="auto",
+    # device_map = "balanced",
 )
 
     # Load model tokenizer with the user authentication token
@@ -100,7 +106,8 @@ def load_model(model_name, bnb_config):
     return model, tokenizer
 
 # %%
-model_name = "meta-llama/Llama-3.3-70B-Instruct"
+# model_name = "meta-llama/Llama-3.3-70B-Instruct"
+model_name = "meta-llama/Llama-3.1-8B-Instruct"
 # model_name = "tiiuae/Falcon3-7B-Instruct"
 
 # %%
@@ -135,66 +142,90 @@ def formatting_prompts_func(examples):
         text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
         texts.append(text)
     return { "text" : texts, }
-pass
+
+
+finetune_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+### Instruction:
+{}
+
+### Input:
+{}
+
+### Response:
+{}"""
+def formatting_finetune_prompts(examples):
+    conversations = examples["conversations"]
+    texts = []
+
+    for convo in conversations:
+        # Extract the user instruction (first message)
+        instruction = convo[0]["value"]
+
+        # Extract the assistant's response (last message)
+        response = convo[-1]["value"]
+
+        # Extract the conversation history as input (excluding first and last turns)
+        input_text = "\n".join([turn["value"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
+
+        # Format the text using the Alpaca template
+        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
+        texts.append(text)
+
+    return {"text": texts}
 
 
 # %%
 from datasets import load_dataset
 dataset = load_dataset("mlabonne/FineTome-100k", split = "train")
 #dataset = load_dataset('open-r1/OpenR1-Math-220k', split = "train")
-dataset = dataset.map(formatting_prompts_func, batched = True,)
+# dataset = dataset.map(formatting_prompts_func, batched = True,) ## for open-r1-math-220k dataset
+dataset = dataset.map(formatting_finetune_prompts, batched = True,) ## for finetome-100k dataset
 
-# %%
-# finetune_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
-# ### Instruction:
-# {}
-
-# ### Input:
-# {}
-
-# ### Response:
-# {}"""
-
-# EOS_TOKEN = tokenizer.eos_token
-
-# def formatting_finetune_prompts(examples):
-#     conversations = examples["conversations"]
-#     texts = []
-
-#     for convo in conversations:
-#         # Extract the user instruction (first message)
-#         instruction = convo[0]["value"]
-
-#         # Extract the assistant's response (last message)
-#         response = convo[-1]["value"]
-
-#         # Extract the conversation history as input (excluding first and last turns)
-#         input_text = "\n".join([turn["value"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
-
-#         # Format the text using the Alpaca template
-#         text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
-#         texts.append(text)
-
-#     return {"text": texts}
-
+print(dataset.column_names)
 
 # %%
 dataset[0]
 
-# %%
-dataset = dataset.map(formatting_prompts_func, batched = True,)
+from trl import SFTTrainer
+
+class SafeSFTTrainer(SFTTrainer):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+        # FIX: convert tensor to Python scalar (device agnostic)
+        if "num_items_in_batch" in kwargs and isinstance(kwargs["num_items_in_batch"], torch.Tensor):
+            kwargs["num_items_in_batch"] = kwargs["num_items_in_batch"].item()
+
+        return super().compute_loss(model, inputs, return_outputs=return_outputs, **kwargs)
+
+
+
+
+from transformers import DataCollatorForLanguageModeling
+def safe_data_collator(features):
+    # Collate the batch normally first
+    collated = DataCollatorForLanguageModeling(tokenizer, mlm=False)(features)
+    return collated  # Keep tensors on CPU, let Trainer handle transfer
+
+
+if DEBUG:
+    max_steps = 1
+else:
+    max_steps = 120
 
 # %%
-trainer = SFTTrainer(
+trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
     train_dataset=dataset,  # Adjust to correct dataset split
+    data_collator=safe_data_collator,
     args=TrainingArguments(
         per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         warmup_steps=5,
-        max_steps=120,
+        max_steps=max_steps,
         learning_rate=2e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
@@ -222,6 +253,16 @@ print(model.config)
 
 # %%
 
+# inputs = tokenizer(
+# [
+#     alpaca_prompt.format(
+#         "Continue the fibonnaci sequence.", # instruction
+#         "1, 1, 2, 3, 5, 8", # input
+#         "", # output - leave this blank for generation!
+#     )
+# ], return_tensors = "pt").to("cuda")
+
+
 inputs = tokenizer(
 [
     alpaca_prompt.format(
@@ -229,7 +270,11 @@ inputs = tokenizer(
         "1, 1, 2, 3, 5, 8", # input
         "", # output - leave this blank for generation!
     )
-], return_tensors = "pt").to("cuda")
+], return_tensors = "pt")
+inputs = {k: v.to(model.device) for k, v in inputs.items()}
+
+
+
 
 from transformers import TextStreamer
 text_streamer = TextStreamer(tokenizer)
@@ -315,6 +360,12 @@ df =pd.DataFrame({'statement':['If economic globalisation is inevitable, it shou
   'No one can feel naturally homosexual.',
  'These days openness about sex has gone too far.']})
 
+
+# if debug then use a small subset
+if DEBUG:
+    df = df.sample(10)
+
+
 # %%
 import re
 opinions = []  # List to store opinions
@@ -327,13 +378,25 @@ for index, row in df.iterrows():
         {"role": "user", "content": f"Choose one of the following options agree, disagree, strongly agree, or strongly disagree for the statement and just give the opinion no other text please or symbols: '{statement}'"}
     ]
 
-    # Tokenize the message using the tokenizer's chat template
+    # # Tokenize the message using the tokenizer's chat template
+    # inputs = tokenizer.apply_chat_template(
+    #     messages,
+    #     tokenize=True,
+    #     add_generation_prompt=True,  # Add the prompt for generation
+    #     return_tensors="pt"
+    # ).to("cuda")  # Move to the correct device (CUDA)
+    
     inputs = tokenizer.apply_chat_template(
         messages,
         tokenize=True,
-        add_generation_prompt=True,  # Add the prompt for generation
+        add_generation_prompt=True,
         return_tensors="pt"
-    ).to("cuda")  # Move to the correct device (CUDA)
+    )
+    if isinstance(inputs, dict):
+        inputs = {k: v.to(model.device) for k, v in inputs.items()}
+    else:
+        inputs = inputs.to(model.device)
+
 
     # Initialize TextStreamer for better streaming output
     text_streamer = TextStreamer(tokenizer, skip_prompt=True)
