@@ -34,7 +34,7 @@ base_model_name = "meta-llama/Llama-3.1-8B-Instruct" # Or "tiiuae/Falcon3-7B-Ins
 adapter_path = "Llama-3.1-8B-Instruct_FineTome_FT"  # Directory where the fine-tuned adapter was saved by trainer.save_model()
 dataset_name = "mlabonne/FineTome-100k" # Dataset used for fine-tuning
 eval_batch_size = 32 # Adjust based on GPU memory for evaluation
-max_new_tokens_generation = 256 # Max tokens for generation during evaluation
+max_new_tokens_generation = 512 # Max tokens for generation during evaluation
 
 # --- Hugging Face Login (Using the token from your original code) ---
 from huggingface_hub import login
@@ -211,7 +211,7 @@ trainer = Trainer(
 # eval_loss = eval_results["eval_loss"]
 # perplexity = math.exp(eval_loss)
 # print(f"Evaluation Loss: {eval_loss:.4f}")
-# print(f"Perplexity: {perplexity:.4f}") # Perplexity = 2.2654 for Llama-3.1-8B-Instruct on 10% (seed 42) test split (10k) of FineTome-100k dataset
+# print(f"Perplexity: {perplexity:.4f}") # Perplexity = 2.2654 & Eval Loss = 0.8177 for Llama-3.1-8B-Instruct on 10% (seed 42) test split (10k) of FineTome-100k dataset
 torch.cuda.empty_cache() # Clear cache after evaluation
 eval_loss = 0.0
 perplexity = 0.0
