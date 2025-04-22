@@ -1,7 +1,7 @@
 # !pip install torch transformers datasets evaluate peft bitsandbytes accelerate sentencepiece trl rouge_score bert_score pandas
 
 import os
-import math
+import gc
 import torch
 import pandas as pd # Added pandas for CSV output
 import evaluate  # Hugging Face Evaluate library
@@ -207,12 +207,14 @@ trainer = Trainer(
 )
 
 # Run evaluation
-eval_results = trainer.evaluate()
-eval_loss = eval_results["eval_loss"]
-perplexity = math.exp(eval_loss)
-print(f"Evaluation Loss: {eval_loss:.4f}")
-print(f"Perplexity: {perplexity:.4f}")
+# eval_results = trainer.evaluate()
+# eval_loss = eval_results["eval_loss"]
+# perplexity = math.exp(eval_loss)
+# print(f"Evaluation Loss: {eval_loss:.4f}")
+# print(f"Perplexity: {perplexity:.4f}") # Perplexity = 2.2654 for Llama-3.1-8B-Instruct on 10% (seed 42) test split (10k) of FineTome-100k dataset
 torch.cuda.empty_cache() # Clear cache after evaluation
+eval_loss = 0.0
+perplexity = 0.0
 
 # --- Generation ---
 print(f"Generating predictions for {len(prompts)} prompts (Batch Size: {eval_batch_size})...")
@@ -228,19 +230,21 @@ for i in tqdm(range(0, len(prompts), eval_batch_size), desc="Generating predicti
         return_tensors="pt",
         padding=True, # Pad batch to longest sequence
         truncation=True,
-        max_length=tokenizer.model_max_length - max_new_tokens_generation # Ensure space for generation
+        # tokenizer.model_max_length = 131072k context tokens for Llama-3.1-8B-Instruct
+        max_length=1024 # To avoid OOM errors, truncate any prompt to at most 1024 tokens (so 1024 + 256 (generation) ≤ 131072)
     ).to(model.device)
 
     # Generate outputs
     with torch.no_grad(): # Disable gradient calculation for inference
         outputs = model.generate(
             **inputs,
-            max_new_tokens=max_new_tokens_generation,
+            max_new_tokens=max_new_tokens_generation, # 256 tokens for generation
             eos_token_id=tokenizer.eos_token_id,
             pad_token_id=tokenizer.pad_token_id, # Important for generation
             do_sample=False, # Use greedy decoding for consistent evaluation
             temperature=None,
             top_p=None,
+            cache_implementation="offloaded", # OffloadedCache conserves GPU memory by keeping only the current layer’s KV cache on GPU and spilling all others to CPU
             # You might want to adjust generation parameters (temperature, top_k, etc.)
             # depending on how you want to evaluate (e.g., sample vs greedy)
         )
@@ -277,6 +281,11 @@ for i in tqdm(range(0, len(prompts), eval_batch_size), desc="Generating predicti
 
         preds.append(pred)
 
+    # ---- free GPU memory after each batch ----
+    del inputs, outputs
+    gc.collect()
+    torch.cuda.empty_cache()
+    
     # Optional: Print progress
     if (i + eval_batch_size) % (eval_batch_size * 10) == 0:
          print(f"  Generated {i + eval_batch_size}/{len(prompts)}")
