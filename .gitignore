@@ -1,5 +1,10 @@
 # Custom Ignores
 Falcon_FT_IMDB/
+Llama-3.1-8B-Instruct_FineTome_FT/
+Llama-3.1-8B-Instruct_FineTome_FT_DEBUG/
+Llama-3.1-8B-Instruct_FineTome_FT_Opinions_DEBUG.csv
+Llama-3.1-8B-Instruct_FineTome_FT_evaluation_report_DEBUG.txt
+Llama-3.1-8B-Instruct_FineTome_FT_predictions_vs_references_DEBUG.csv
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

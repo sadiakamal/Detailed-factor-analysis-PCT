@@ -36,8 +36,8 @@ from trl import SFTConfig, SFTTrainer
 import torch.nn.utils as nn_utils
 
 
-DEBUG = False
-# DEBUG = True
+# DEBUG = False
+DEBUG = True
 
 # %%
 # wandbapi = '85595c51f7c336bde5ef27388389af039c574463'
