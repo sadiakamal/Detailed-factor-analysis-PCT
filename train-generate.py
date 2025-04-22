@@ -32,6 +32,8 @@ from trl import SFTConfig, SFTTrainer
 from datasets import load_dataset
 from huggingface_hub import login
 
+from utils import train_test_split
+
 
 DEBUG = False
 # DEBUG = True
@@ -155,6 +157,9 @@ def tokenize_function(examples):
 
 # %% Load and Prepare Dataset
 raw_dataset = load_dataset(dataset_name, split="train")
+# split 80% as training data with seed 42
+train_test_split = raw_dataset.train_test_split(test_size=0.2, seed=42)
+raw_dataset = train_test_split["train"]
 print(f"Loaded raw dataset with {len(raw_dataset)} examples.")
 
 # Apply formatting

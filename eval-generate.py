@@ -33,7 +33,7 @@ logging.set_verbosity_info()
 base_model_name = "meta-llama/Llama-3.1-8B-Instruct" # Or "tiiuae/Falcon3-7B-Instruct" or your base model
 adapter_path = "Llama-3.1-8B-Instruct_FineTome_FT"  # Directory where the fine-tuned adapter was saved by trainer.save_model()
 dataset_name = "mlabonne/FineTome-100k" # Dataset used for fine-tuning
-eval_batch_size = 2 # Adjust based on GPU memory for evaluation
+eval_batch_size = 1 # Adjust based on GPU memory for evaluation
 max_new_tokens_generation = 256 # Max tokens for generation during evaluation
 
 # --- Hugging Face Login (Using the token from your original code) ---
