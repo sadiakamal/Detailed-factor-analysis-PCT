@@ -33,7 +33,7 @@ logging.set_verbosity_info()
 base_model_name = "meta-llama/Llama-3.1-8B-Instruct" # Or "tiiuae/Falcon3-7B-Instruct" or your base model
 adapter_path = "Llama-3.1-8B-Instruct_FineTome_FT"  # Directory where the fine-tuned adapter was saved by trainer.save_model()
 dataset_name = "mlabonne/FineTome-100k" # Dataset used for fine-tuning
-eval_batch_size = 1 # Adjust based on GPU memory for evaluation
+eval_batch_size = 32 # Adjust based on GPU memory for evaluation
 max_new_tokens_generation = 256 # Max tokens for generation during evaluation
 
 # --- Hugging Face Login (Using the token from your original code) ---
@@ -65,6 +65,7 @@ base_model = AutoModelForCausalLM.from_pretrained(
     base_model_name,
     quantization_config=bnb_config,
     device_map="auto",  # Automatically distribute across available GPUs
+    low_cpu_mem_usage=True,
     torch_dtype=torch.bfloat16,
     trust_remote_code=True # Important for some models like Falcon
     # use_auth_token=True might be implicitly handled by login(), but can add if needed
@@ -146,7 +147,7 @@ raw_dataset = load_dataset(dataset_name, split="train") # Load the split used fo
 
 # Split the *raw* dataset to get the same evaluation set used during training
 print("Splitting dataset (using seed 42)...")
-split_raw = raw_dataset.train_test_split(test_size=0.2, seed=42)
+split_raw = raw_dataset.train_test_split(test_size=0.1, seed=42)
 eval_raw_ds = split_raw["test"]
 
 # Prepare the dataset for perplexity calculation (needs full text tokenized)
@@ -186,7 +187,7 @@ print("Calculating Perplexity...")
 # Define minimal TrainingArguments needed for evaluation
 eval_args = TrainingArguments(
     output_dir="./eval_output", # Temporary directory
-    per_device_eval_batch_size=eval_batch_size,
+    per_device_eval_batch_size=1,
     logging_steps=10,
     report_to="none", # Don't report to wandb/tensorboard
     fp16=not torch.cuda.is_bf16_supported(), # Match training settings if possible

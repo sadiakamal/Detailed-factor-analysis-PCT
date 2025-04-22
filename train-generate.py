@@ -1,18 +1,10 @@
 # !pip install trl bitsandbytes peft datasets transformers accelerate torch huggingface_hub pandas regex
 # (Removed unnecessary imports like math, evaluate)
 
-import os
-from random import randrange
-from functools import partial
 import torch
 import re # Keep re for response cleaning
 import pandas as pd
-import numpy as np
-from torch import nn
-from torch.optim import Adam
 from tqdm import tqdm
-import bitsandbytes as bnb
-import torch.nn.utils as nn_utils
 
 from transformers import (AutoModelForCausalLM,
                           AutoTokenizer,
@@ -31,8 +23,6 @@ from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 from trl import SFTConfig, SFTTrainer
 from datasets import load_dataset
 from huggingface_hub import login
-
-from utils import train_test_split
 
 
 DEBUG = False
@@ -157,17 +147,17 @@ def tokenize_function(examples):
 
 # %% Load and Prepare Dataset
 raw_dataset = load_dataset(dataset_name, split="train")
-# split 80% as training data with seed 42
-train_test_split = raw_dataset.train_test_split(test_size=0.2, seed=42)
+# split 90% as training data with seed 42
+train_test_split = raw_dataset.train_test_split(test_size=0.1, seed=42)
 raw_dataset = train_test_split["train"]
 print(f"Loaded raw dataset with {len(raw_dataset)} examples.")
 
 # Apply formatting
-dataset = raw_dataset.map(formatting_finetune_prompts, batched=True, remove_columns=raw_dataset.column_names)
-print(f"Formatted dataset with {len(dataset)} examples.")
+formatted_dataset = raw_dataset.map(formatting_finetune_prompts, batched=True, remove_columns=raw_dataset.column_names)
+print(f"Formatted dataset with {len(formatted_dataset)} examples.")
 
 # Apply tokenization
-tokenized_dataset = dataset.map(tokenize_function, batched=True, remove_columns=["text"]) # Remove original text column
+tokenized_dataset = formatted_dataset.map(tokenize_function, batched=True, remove_columns=["text"]) # Remove original text column
 print(f"Tokenized dataset created.")
 print("Columns in tokenized dataset:", tokenized_dataset.column_names)
 
