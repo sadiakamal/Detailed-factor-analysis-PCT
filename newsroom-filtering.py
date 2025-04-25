@@ -5,13 +5,46 @@ from typing_extensions import Optional
 import os
 from collections import defaultdict
 from tqdm import tqdm
+from enum import Enum
 
-MAX_NUM_TO_CHECK_TRAIN = 5
+MAX_NUM_TO_CHECK_TRAIN = 1000
 MAX_NUM_TO_CHECK = {"train": MAX_NUM_TO_CHECK_TRAIN,
-                    "validation": round(MAX_NUM_TO_CHECK_TRAIN * 0.1),
-                    "test": round(MAX_NUM_TO_CHECK_TRAIN * 0.2)}
-SEED = 42
+                    "validation": round(MAX_NUM_TO_CHECK_TRAIN * 0.001),
+                    "test": round(MAX_NUM_TO_CHECK_TRAIN * 0.002)}
+SEED = 45
+START = 0
 
+class Parts(Enum):
+    URL = 1
+    SUMMARY = 2
+    CONTENT = 3
+
+USE = Parts.CONTENT
+
+PROMPT_URL = "You are an expert news classifier. You are given the following URL: [{}] for a news article."
+PROMPT_SUMMARY = ("You are an expert news classifier. You are given the following summary of a news article."
+                  "\nSummary: \n{}\n")
+PROMPT_CONTENT = ("You are an expert news classifier. You are given the following content of a news article."
+                  "\nContent: \n{}\n")
+
+PROMPT_INSTR = """
+Your task is to decide whether the article is about political news or non-political news.
+
+Political news includes topics such as:
+	•	government actions, policies, or legislation
+	•	elections, political parties, or political leaders
+	•	international relations and diplomacy
+	•	political protests or movements
+	•	public administration and governance
+
+Non-political news includes:
+	•	sports, technology, science, health, education, entertainment
+	•	local crime, business news unrelated to policy
+	•	lifestyle, human interest stories
+
+Please answer only YES (if the article is political) or NO (if it is not).
+Do not explain your answer.
+"""
 
 class OpenRouter:
     def __init__(self, model_name: str, key: str, role:str="user", site_url: str = "", site_name: str = ""):
@@ -66,13 +99,15 @@ class PoliticalNewsFilter:
     def __init__(self, router: OpenRouter):
         self.router = router
 
-    def run(self, url: str, summary: Optional[str] = None) -> Optional[bool]:
-        prompt_base = f"you are given the following url: {url} for a news article" if summary is not None else \
-            f"you are given the following url: [{url}] and summary: [{summary}] for a news article"
-
-        prompt = (f"{prompt_base} . the article can cover political or other type of news (sports/technology/society). "
-                           f"do you think the article covers political news? please answer in YES or NO. "
-                           f"Do not provide any explanation")
+    def run(self, url: str, summary: Optional[str] = None, content: Optional[str] = None) -> Optional[bool]:
+        if USE == Parts.URL:
+            prompt = f"{PROMPT_URL.format(url)} {PROMPT_INSTR}"
+        elif USE == Parts.SUMMARY:
+           prompt = f"{PROMPT_SUMMARY.format(summary)} {PROMPT_INSTR}"
+        elif USE == Parts.CONTENT:
+            prompt = f"{PROMPT_CONTENT.format(content)} {PROMPT_INSTR}"
+        else:
+            raise RuntimeError("prompt not defined")
         reply = self.router.get_response(prompt)
         if reply.lower() in ["yes", "no"]:
             return reply == "yes"
@@ -92,9 +127,9 @@ errors = defaultdict(list)
 
 for k in dataset:
     split = dataset[k].shuffle(SEED)
-    for i in tqdm(range(MAX_NUM_TO_CHECK[k]), desc=f"filtering: {k}"):
+    for i in tqdm(range(START, MAX_NUM_TO_CHECK[k]), desc=f"filtering: {k}"):
         datum = split[i]
-        result = news_filter.run(datum['url'])
+        result = news_filter.run(datum['url'], summary=datum['summary'], content=datum["text"])
         if result is None:
             errors[k].append(datum)
         elif result:
@@ -103,6 +138,18 @@ for k in dataset:
             non_political[k].append(datum)
     print("="*30)
 
+os.makedirs("political", exist_ok=True)
+os.makedirs("non-political", exist_ok=True)
+os.makedirs("errors", exist_ok=True)
+
 print("political:", [f"{k}: {len(v)}" for k,v in political.items()])
+for k in dataset:
+    json.dump(political[k], open(f"political/{k}.json", "w"), indent=2)
+
 print("non political:", [f"{k}: {len(v)}" for k,v in non_political.items()])
+for k in dataset:
+    json.dump(political[k], open(f"non-political/{k}.json", "w"), indent=2)
+
 print("errors:", [f"{k}: {len(v)}" for k,v in errors.items()])
+for k in dataset:
+    json.dump(political[k], open(f"errors/{k}.json", "w"), indent=2)
