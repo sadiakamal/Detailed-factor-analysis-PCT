@@ -32,8 +32,8 @@ dataset_name = "mlabonne/FineTome-100k" # Exact dataset name used to load from H
 dataset = "FineTome" # Short name for dataset to save output files
 # %% Choose Model
 # model_name = "meta-llama/Llama-3.1-70B-Instruct" # Larger model, ensure enough VRAM
-model_name = "meta-llama/Llama-3.1-8B-Instruct"
-# model_name = "tiiuae/falcon-7b-instruct" # Switched from Falcon3
+# model_name = "meta-llama/Llama-3.1-8B-Instruct"
+model_name = "tiiuae/falcon-7b-instruct" # Switched from Falcon3
 
 # %%
 # Login to Hugging Face Hub (replace with your token)
