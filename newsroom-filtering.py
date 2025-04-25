@@ -1,3 +1,6 @@
+"""
+prompt based approach to filter out political news articles from the newsroom dataset. We didn't end up using it.
+"""
 import requests
 import json
 from datasets import load_dataset
