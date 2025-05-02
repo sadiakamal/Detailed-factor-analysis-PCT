@@ -1,4 +1,6 @@
 import os
+import argparse
+# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 from random import randrange
 from functools import partial
 import torch
@@ -29,12 +31,16 @@ from trl import SFTConfig, SFTTrainer
 import torch.nn.utils as nn_utils
 from datasets import load_dataset
 
-
+parser = argparse.ArgumentParser(description="Fine-tune a language model")
+parser.add_argument("--model_n", type=str, required=True, help="The name of the model to fine-tune")
+parser.add_argument("--dataset_n", type=str, required=True, help="The name of the dataset to use")
+args = parser.parse_args()
 
 
 from huggingface_hub import login
 login(token='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') # Sadia
 
+output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
 
 
 
@@ -81,19 +87,24 @@ def load_model(model_name, bnb_config):
     if tokenizer.pad_token is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
-    #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "right"
 
     return model, tokenizer
 
-# %%
-#model_name = "mistralai/Mistral-7B-Instruct-v0.3"
-model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
-# model_name = "tiiuae/Falcon3-7B-Instruct"
+if args.model_n == 'mistral':
+    model_name = "mistralai/Mistral-7B-Instruct-v0.3"
+elif args.model_n == 'llama3':
+    model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
+elif args.model_n == 'falcon':
+    model_name = "tiiuae/Falcon3-7B-Instruct"
+else:
+    print("Please provide a valid model name")
+    sys.exit(1)
 
-# %%
+# Load model and tokenizer
 model, tokenizer = load_model(model_name, bnb_config)
-print(tokenizer.model_max_length)
-# %%
+# print(tokenizer.model_max_length)
+# # %%
 model = prepare_model_for_kbit_training(model)
 
 # %%
@@ -105,39 +116,63 @@ alpaca_prompt = """Below is an instruction that describes a task, paired with an
 ### Instruction:
 {}
 
-### Input:
+### Article:
 {}
 
-### Response:
+### Political Leaning:
 {}"""
 
 EOS_TOKEN = tokenizer.eos_token
 
-##### For News Articles dataset
-# def formatting_prompts_func(examples):
-#     instructions = examples["instruction"]
-#     inputs       = examples["input"]
-#     outputs      = examples["output"]
-#     texts = []
-#     for instruction, input, output in zip(instructions, inputs, outputs):
-#         # Must add EOS_TOKEN, otherwise your generation will go on forever!
-#         text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
-#         texts.append(text)
-#     return { "text" : texts, }
+#### For News Articles dataset
+def formatting_prompts_func(examples):
+    instructions = examples["instruction"]
+    inputs       = examples["input"]
+    outputs      = examples["output"]
+    texts = []
+    for instruction, input, output in zip(instructions, inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
+        texts.append(text)
+    return { "text" : texts, }
 
-# dataset = load_dataset('nlpatunt/NewsArticles-Baly-et-al',split = 'train[:30000]')
-# train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
-# train_dataset = train_subset["train"]
-# test_dataset = train_subset["test"]
-# train_dataset = train_dataset.map(formatting_prompts_func, batched = True,)
+alpaca_prompt2 = """Below are movie review and sentiment pair. Sentiment can be positive or negative. Write a response that appropriately completes the request.
+### Review:
+{}
+### Sentiment:
+{}"""
+
+def formatting_prompts_func_imdb(examples):
+    inputs = examples["text"]
+    labels = examples["label"]
+    texts = []
+    
+    for input, label in zip(inputs, labels):
+        # Convert numerical label to text
+        sentiment = "positive" if label == 1 else "negative"
+        
+        # Format the prompt with review and sentiment
+        text = alpaca_prompt2.format(input, sentiment) + EOS_TOKEN
+        texts.append(text)
+        
+    return {"text": texts}
 
 
+if args.dataset_n == 'newsarticles':
+    dataset = load_dataset('nlpatunt/NewsArticles-Baly-et-al',split = 'train[:30000]')
+    train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
+    train_dataset = train_subset["train"]
+    test_dataset = train_subset["test"]
+    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
+elif args.dataset_n == 'imdb':
+    dataset = load_dataset("stanfordnlp/imdb", split="train")
+    train_dataset = load_dataset("stanfordnlp/imdb", split="train")
+    test_dataset = load_dataset("stanfordnlp/imdb", split="test")
+    train_dataset = train_dataset.map(formatting_prompts_func_imdb, batched=True)
+else:
+    print("Please provide a valid dataset name")   
 
 
-##### This is for IMDB dataset
-### unopmment this to use IMDB dataset
-train_dataset = load_dataset("stanfordnlp/imdb", split="train")
-test_dataset = load_dataset("stanfordnlp/imdb", split="test")
 
 print(train_dataset.column_names)
 
@@ -172,9 +207,10 @@ trainer = SafeSFTTrainer(
     processing_class=tokenizer,
     max_seq_length= 2048,
     train_dataset=train_dataset,  # Adjust to correct dataset split
+    dataset_text_field = 'text',
     data_collator=safe_data_collator,
     args=TrainingArguments(
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         warmup_steps=5,
         num_train_epochs=2,
@@ -187,7 +223,7 @@ trainer = SafeSFTTrainer(
         lr_scheduler_type="linear",
         push_to_hub=True,
         seed=3407,
-        output_dir="Llama-8B-Instruct-IMDB-TACC",
+        output_dir=output_dir,
     ),
 )
 
@@ -326,10 +362,5 @@ df['opinion'] = opinions
 # Display the DataFrame with opinions
 print(df)
 
-# %%
-df
-
-
-# df.to_csv('Mistral-FT-NA.csv',index= False)
 print('saved')
 
