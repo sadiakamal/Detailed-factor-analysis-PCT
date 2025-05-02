@@ -209,7 +209,7 @@ def safe_data_collator(features):
 trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
-    max_seq_length= 2048,
+    #max_seq_length= 2048,
     train_dataset=train_dataset,  # Adjust to correct dataset split
     dataset_text_field = 'text',
     data_collator=safe_data_collator,
