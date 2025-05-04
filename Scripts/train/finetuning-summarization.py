@@ -1,6 +1,8 @@
 import os
 from random import randrange
 from functools import partial
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+import argparse
 import torch
 import sys
 
@@ -16,6 +18,7 @@ from transformers import (AutoModelForCausalLM,
                           logging,
                           set_seed)
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TextStreamer
+from transformers import LlamaForSequenceClassification, LlamaTokenizer,LlamaModel
 from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 import bitsandbytes as bnb
 
@@ -29,24 +32,21 @@ from trl import SFTConfig, SFTTrainer
 import torch.nn.utils as nn_utils
 from datasets import load_dataset
 
+parser = argparse.ArgumentParser(description="Fine-tune a language model")
+parser.add_argument("--model_n", type=str, required=True, help="The name of the model to fine-tune")
+parser.add_argument("--dataset_n", type=str, required=True, help="The name of the dataset to use")
+args = parser.parse_args()
 
-DEBUG = False
-# DEBUG = True
-
-
-# wandbapi = '85595c51f7c336bde5ef27388389af039c574463'
+output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
 
 from huggingface_hub import login
 login(token='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') # Sadia
-# login(token='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') # Rakib
 
 
  # BitsAndBytesConfig int-4 config
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, llm_int8_enable_fp32_cpu_offload=True)
-# bnb_config = BitsAndBytesConfig(
-#     load_in_4bit=True,
-# )
+
 
 lora_config = LoraConfig(
     r = 16, # the dimension of the low-rank matrices
@@ -69,8 +69,7 @@ def load_model(model_name, bnb_config):
     # Get number of GPU device and set maximum memory
     n_gpus = torch.cuda.device_count()
     print('number of gpus',n_gpus)
-
-    max_seq_length = 1024
+    
     model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
@@ -86,122 +85,105 @@ def load_model(model_name, bnb_config):
     if tokenizer.pad_token is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
-    #tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "right"
 
     return model, tokenizer
 
-# %%
-# model_name = "meta-llama/Llama-3.3-70B-Instruct"
-model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
-# model_name = "tiiuae/Falcon3-7B-Instruct"
+if args.model_n == 'mistral':
+    model_name = "mistralai/Mistral-7B-Instruct-v0.3"
+elif args.model_n == 'llama3':
+    model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
+elif args.model_n == 'falcon':
+    model_name = "tiiuae/Falcon3-7B-Instruct"
+elif args.model_n == 'phi4':
+    model_name = "microsoft/phi-4"
+elif args.model_n == 'gemma':
+    model_name = "google/gemma-3-4b-it"
+else:
+    print("Please provide a valid model name")
+    sys.exit(1)
 
-# %%
 model, tokenizer = load_model(model_name, bnb_config)
-print(tokenizer.model_max_length)
-# %%
 model = prepare_model_for_kbit_training(model)
-
-# %%
 model = get_peft_model(model, lora_config)
 
-# %%
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+alpaca_prompt = """Below is an research paper. Write a summary that appropriately describes the paper.
 
-### Instruction:
+### Paper:
 {}
 
-### Input:
-{}
-
-### Response:
+### Summary:
 {}"""
+
 
 EOS_TOKEN = tokenizer.eos_token
 def formatting_prompts_func(examples):
-    instructions = examples["instruction"]
-    inputs       = examples["input"]
-    outputs      = examples["output"]
+    inputs       = examples["research_paper"]
+    outputs      = examples["summary"]
     texts = []
-    for instruction, input, output in zip(instructions, inputs, outputs):
+    for input, output in zip(inputs, outputs):
         # Must add EOS_TOKEN, otherwise your generation will go on forever!
-        text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
+        text = alpaca_prompt.format(input, output) + EOS_TOKEN
+        texts.append(text)
+    return { "text" : texts, }
+
+# dataset = load_dataset("nlpatunt/scisumm", split = "train")
+# train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+# train_dataset = train_test_split["train"]
+# test_dataset = train_test_split["test"]
+# train_dataset = train_dataset.map(formatting_prompts_func, batched = True,) 
+
+##### FOR Newsroom dataset
+
+
+alpaca_prompt2 = """Below is a news article. Write a summary that appropriately describes the article.
+
+### News Article:
+{}
+
+### Summary:
+{}"""
+
+
+def formatting_prompts_func2(examples):
+    inputs       = examples["text"]
+    outputs      = examples["summary"]
+    texts = []
+    for input, output in zip(inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt2.format(input, output) + EOS_TOKEN
         texts.append(text)
     return { "text" : texts, }
 
 
-finetune_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-### Instruction:
-{}
-
-### Input:
-{}
-
-### Response:
-{}"""
-def formatting_finetune_prompts(examples):
-    conversations = examples["conversations"]
-    texts = []
-
-    for convo in conversations:
-        # Extract the user instruction (first message)
-        instruction = convo[0]["value"]
-
-        # Extract the assistant's response (last message)
-        response = convo[-1]["value"]
-
-        # Extract the conversation history as input (excluding first and last turns)
-        input_text = "\n".join([turn["value"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
-
-        # Format the text using the Alpaca template
-        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
-        texts.append(text)
-
-    return {"text": texts}
-def formatting_finetune_prompts_political(examples):
-    conversations = examples["conversations"]
-    texts = []
-
-    for convo in conversations:
-        # Extract the user instruction (first message)
-        instruction = convo[0]["content"]
-
-        # Extract the assistant's response (last message)
-        response = convo[-1]["content"]
-
-        # Extract the conversation history as input (excluding first and last turns)
-        input_text = "\n".join([turn["content"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
-
-        # Format the text using the Alpaca template
-        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
-        texts.append(text)
-
-    return {"text": texts}
+if args.dataset_n == 'newsroom':
+    dataset = load_dataset("nlpatunt/newsroom-truncated", split = "train[:5000]")
+    train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+    train_dataset = train_test_split["train"]
+    test_dataset = train_test_split["test"]
+    train_dataset = train_dataset.map(formatting_prompts_func2, batched = True,)
+elif args.dataset_n == 'scisumm':
+    dataset = load_dataset("nlpatunt/scisumm", split = "train")
+    train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+    train_dataset = train_test_split["train"]
+    test_dataset = train_test_split["test"]
+    train_dataset = train_dataset.map(formatting_prompts_func, batched = True,)
+else:
+    print("Please provide a valid dataset name")   
 
 
+# dataset = load_dataset("nlpatunt/newsroom-truncated", split = "train[:5000]")
+# train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+# train_dataset = train_test_split["train"]
+# test_dataset = train_test_split["test"]
+# train_dataset = train_dataset.map(formatting_prompts_func2, batched = True,)
+
+
+
+print(train_dataset.column_names)
 
 # %%
-#### FOR FINETOME
-# dataset = load_dataset("mlabonne/FineTome-100k", split = "train")
-# train_subset = dataset.train_test_split(train_size=5000, shuffle=True, seed=42)
-# train_dataset = train_subset["train"]
-# test_dataset = train_subset["test"]
-# print(train_dataset[0])
-# print(len(train_dataset))
-####For SCISUMM
-dataset = load_dataset('nlpatunt/Political-conversation',split = 'train')
-train_subset = dataset.train_test_split(test_size=0.2)
-train_dataset = train_subset["train"]
-test_dataset = train_subset["test"]
-train_dataset = train_dataset.map(formatting_finetune_prompts_political, batched = True,) ## for finetome-100k dataset
-#dataset = load_dataset("imdb", split="train")
-# dataset =load_dataset("ccdv/pubmed-summarization", split="train")
-
-
-print(dataset.column_names)
-
-# %%
-print(dataset[0])
+print(train_dataset[0])
 
 from trl import SFTTrainer
 
@@ -225,18 +207,18 @@ def safe_data_collator(features):
     return collated  # Keep tensors on CPU, let Trainer handle transfer
 
 
-
 trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
-    train_dataset=train_dataset,  # Adjust to correct dataset split
+    max_seq_length= 2048,
+    train_dataset=train_dataset,
+    dataset_text_field = 'text',  # Adjust to correct dataset split
     data_collator=safe_data_collator,
     args=TrainingArguments(
         per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         warmup_steps=5,
         num_train_epochs=2,
-    
         learning_rate=2e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
@@ -246,37 +228,32 @@ trainer = SafeSFTTrainer(
         lr_scheduler_type="linear",
         push_to_hub=True,
         seed=3407,
-        output_dir="LLama3-8B-Instruct-FT-political-convo-2",
+        output_dir=output_dir,
     ),
 )
 
-
+# Start training
+# trainer.train()
 
 # %%
 trainer_stats = trainer.train()
 
-# %%
-print(model.config)
 
+messages = [
+    {"role": "user", "content": "Choose one of the following options agree, disagree, strongly agree, or strongly disagree for the statement and just give the opinion:Those who are able to work, and refuse the opportunity, should not expect society's support."},
+]
+inputs = tokenizer.apply_chat_template(
+    messages,
+    tokenize = True,
+    add_generation_prompt = True, # Must add for generation
+    return_tensors = "pt",
 
+).to("cuda")
 
-inputs = tokenizer(
-[
-    alpaca_prompt.format(
-        "Continue the fibonnaci sequence.", # instruction
-        "1, 1, 2, 3, 5, 8", # input
-        "", # output - leave this blank for generation!
-    )
-], return_tensors = "pt")
-inputs = {k: v.to(model.device) for k, v in inputs.items()}
-
-
-
-
-# from transformers import TextStreamer
-# text_streamer = TextStreamer(tokenizer, skip_prompt = True)
-# output= model.generate(input_ids = inputs, streamer = text_streamer, max_new_tokens = 50,
-#                    use_cache = True, temperature = 1.5, min_p = 0.1)
+from transformers import TextStreamer
+text_streamer = TextStreamer(tokenizer, skip_prompt = True)
+output= model.generate(input_ids = inputs, streamer = text_streamer, max_new_tokens = 50,
+                   use_cache = True, temperature = 1.5, min_p = 0.1)
 
 # %%
 df =pd.DataFrame({'statement':['If economic globalisation is inevitable, it should primarily serve humanity rather than the interests of trans-national corporations.',
@@ -358,6 +335,14 @@ for index, row in df.iterrows():
     messages = [
         {"role": "user", "content": f"Choose one of the following options agree, disagree, strongly agree, or strongly disagree for the statement and just give the opinion no other text please or symbols: '{statement}'"}
     ]
+
+    # # Tokenize the message using the tokenizer's chat template
+    # inputs = tokenizer.apply_chat_template(
+    #     messages,
+    #     tokenize=True,
+    #     add_generation_prompt=True,  # Add the prompt for generation
+    #     return_tensors="pt"
+    # ).to("cuda")  # Move to the correct device (CUDA)
     
     inputs = tokenizer.apply_chat_template(
         messages,
@@ -380,7 +365,7 @@ for index, row in df.iterrows():
         streamer=text_streamer,  # Stream the output
         max_new_tokens=50,  # Limit the number of tokens generated
         use_cache=True,  # Use cached data for efficiency
-        temperature=1,  # Temperature to control randomness
+        temperature=1.5,  # Temperature to control randomness
         min_p=0.1  # Control minimum probability for selection
     )
 
@@ -408,13 +393,8 @@ df['opinion'] = opinions
 # Display the DataFrame with opinions
 print(df)
 
-# %%
-df
 
-# %% [markdown]
-# 
 
-# %%
-df.to_csv('Llama3-FT-Poltical-convo.csv',index= False)
+# df.to_csv('Llama-newsroom.csv',index= False)
 
 

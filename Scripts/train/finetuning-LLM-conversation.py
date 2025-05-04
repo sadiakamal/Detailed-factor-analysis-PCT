@@ -1,8 +1,6 @@
 import os
-import argparse
 from random import randrange
-## If specific GPU is needed, uncomment the line below and set the desired GPU ID, this has to be done before importing torch
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+import argparse
 from functools import partial
 import torch
 import sys
@@ -37,19 +35,18 @@ parser.add_argument("--model_n", type=str, required=True, help="The name of the 
 parser.add_argument("--dataset_n", type=str, required=True, help="The name of the dataset to use")
 args = parser.parse_args()
 
+output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
+
 
 from huggingface_hub import login
 login(token='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') # Sadia
 # login(token='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') # Rakib
 
-output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
 
  # BitsAndBytesConfig int-4 config
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, llm_int8_enable_fp32_cpu_offload=True)
-# bnb_config = BitsAndBytesConfig(
-#     load_in_4bit=True,
-# )
+
 
 lora_config = LoraConfig(
     r = 16, # the dimension of the low-rank matrices
@@ -72,7 +69,6 @@ def load_model(model_name, bnb_config):
     # Get number of GPU device and set maximum memory
     n_gpus = torch.cuda.device_count()
     print('number of gpus',n_gpus)
-
     model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
@@ -89,7 +85,6 @@ def load_model(model_name, bnb_config):
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "right"
-    
 
     return model, tokenizer
 
@@ -107,19 +102,19 @@ else:
     print("Please provide a valid model name")
     sys.exit(1)
 
-
-# %%
 model, tokenizer = load_model(model_name, bnb_config)
-# print(tokenizer.model_max_length)
-# # %%
+print(tokenizer.model_max_length)
+
 model = prepare_model_for_kbit_training(model)
 
 # %%
 model = get_peft_model(model, lora_config)
 
+# %%
+alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
-alpaca_prompt = """Below is an QA pair that describes a question, paired with an answer that provides that is the response for the question. Write a response that appropriately answers tthe question.
-
+### Instruction:
+{}
 
 ### Input:
 {}
@@ -129,69 +124,87 @@ alpaca_prompt = """Below is an QA pair that describes a question, paired with an
 
 EOS_TOKEN = tokenizer.eos_token
 def formatting_prompts_func(examples):
-    inputs       = examples["Question"]
-    outputs      = examples["Answer"]
+    instructions = examples["instruction"]
+    inputs       = examples["input"]
+    outputs      = examples["output"]
     texts = []
-    for input, output in zip(inputs, outputs):
+    for instruction, input, output in zip(instructions, inputs, outputs):
         # Must add EOS_TOKEN, otherwise your generation will go on forever!
-        text = alpaca_prompt.format(input, output) + EOS_TOKEN
+        text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
         texts.append(text)
     return { "text" : texts, }
 
 
-alpaca_prompt1 = """Below is an QA pair that describes a mathematical problem, paired with solution and answer that provides that is the response for the question. Write a response that appropriately answers the question.
+finetune_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
-# ### Problem:
-# {}
+### Instruction:
+{}
 
-# ### Input:
-# {}
+### Input:
+{}
 
-# ### Response:
-# {}"""
-
-
-def formatting_prompts_func_R1(examples):
-    problems = examples["problem"]
-    inputs       = examples["solution"]
-    outputs      = examples["answer"]
+### Response:
+{}"""
+def formatting_finetune_prompts(examples):
+    conversations = examples["conversations"]
     texts = []
-    for problem, input, output in zip(problems, inputs, outputs):
-        # Must add EOS_TOKEN, otherwise your generation will go on forever!
-        text = alpaca_prompt1.format(problem, input, output) + EOS_TOKEN
-        texts.append(text)
-    return { "text" : texts, }
 
-if args.dataset_n == 'openR1':
-    # Load the dataset
-    dataset = load_dataset('open-r1/OpenR1-Math-220k', split='train[:10000]')
-    # Split the dataset into train and test sets
-    train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
-    train_dataset = train_subset["train"]
-    test_dataset = train_subset["test"]
-    train_dataset = train_dataset.map(formatting_prompts_func_R1, batched = True,)
+    for convo in conversations:
+        # Extract the user instruction (first message)
+        instruction = convo[0]["value"]
+
+        # Extract the assistant's response (last message)
+        response = convo[-1]["value"]
+
+        # Extract the conversation history as input (excluding first and last turns)
+        input_text = "\n".join([turn["value"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
+
+        # Format the text using the Alpaca template
+        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
+        texts.append(text)
+
+    return {"text": texts}
+def formatting_finetune_prompts_political(examples):
+    conversations = examples["conversations"]
+    texts = []
+
+    for convo in conversations:
+        # Extract the user instruction (first message)
+        instruction = convo[0]["content"]
+
+        # Extract the assistant's response (last message)
+        response = convo[-1]["content"]
+
+        # Extract the conversation history as input (excluding first and last turns)
+        input_text = "\n".join([turn["content"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
+
+        # Format the text using the Alpaca template
+        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
+        texts.append(text)
+
+    return {"text": texts}
+
+
+
+if args.dataset_n == 'finetome':
     num_train_epochs = 2
-elif args.dataset_n == 'canadianQA':
-    dataset = load_dataset('nlpatunt/canadian-parliamentary-qa',split = 'train[:10000]')
-    print(len(dataset))
+    dataset = load_dataset("mlabonne/FineTome-100k", split="train[:5000]")
+    train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+    train_dataset = train_test_split["train"]
+    test_dataset = train_test_split["test"]
+    print(len(train_dataset))
+    train_dataset = train_dataset.map(formatting_finetune_prompts, batched = True,)
+elif args.dataset_n == 'pol-convo':
+    num_train_epochs = 4
+    dataset = load_dataset('nlpatunt/Political-conversation',split = 'train')
     train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
     train_dataset = train_subset["train"]
     test_dataset = train_subset["test"]
-    train_dataset = train_dataset.map(formatting_prompts_func, batched = True,) 
-    num_train_epochs = 4
+    train_dataset = train_dataset.map(formatting_finetune_prompts_political, batched = True,)
 else:
-    print("Please provide a valid dataset name")   
+    print("Please provide a valid dataset name")  
 
 
-# dataset = load_dataset('open-r1/OpenR1-Math-220k',split = 'train[:10000]')
-# train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
-# train_dataset = train_subset["train"]
-# test_dataset = train_subset["test"]
-
-
-print(train_dataset.column_names)
-
-print(train_dataset[0])
 
 from trl import SFTTrainer
 
@@ -219,12 +232,12 @@ def safe_data_collator(features):
 trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
-    max_seq_length= 2048,
     train_dataset=train_dataset,
     dataset_text_field = 'text',  # Adjust to correct dataset split
     data_collator=safe_data_collator,
+    max_seq_length= 2048,
     args=TrainingArguments(
-        per_device_train_batch_size=4,
+        per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         warmup_steps=5,
         num_train_epochs=num_train_epochs,
@@ -248,6 +261,18 @@ trainer_stats = trainer.train()
 
 # %%
 print(model.config)
+
+
+
+inputs = tokenizer(
+[
+    alpaca_prompt.format(
+        "Continue the fibonnaci sequence.", # instruction
+        "1, 1, 2, 3, 5, 8", # input
+        "", # output - leave this blank for generation!
+    )
+], return_tensors = "pt")
+inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
 
 
@@ -316,7 +341,6 @@ df =pd.DataFrame({'statement':['If economic globalisation is inevitable, it shou
  'These days openness about sex has gone too far.']})
 
 
-
 import re
 opinions = []  # List to store opinions
 
@@ -355,6 +379,7 @@ for index, row in df.iterrows():
 
     # Get the generated opinion from the streamer
     response= tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+    print('before cleaning')
      # **Step 1: Remove metadata like 'user', 'assistant', and prompts**
     # Find the index where the actual response starts
     split_response = re.split(r"\b(?:user|assistant)\b[:\-]?\s*", response, flags=re.IGNORECASE)
@@ -368,20 +393,9 @@ for index, row in df.iterrows():
 
 
 
-    # In case the model does not respond as exp
 
-# %%
 df['opinion'] = opinions
 
 # Display the DataFrame with opinions
 print(df)
-
-# %%
-df
-
-
-df.to_csv('Mistral-FT-openR1.csv',index= False)
-
-print('Training done')
-
-
+print('training done')

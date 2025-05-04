@@ -97,10 +97,14 @@ elif args.model_n == 'llama3':
     model_name = "meta-llama/Meta-Llama-3-8B-Instruct"
 elif args.model_n == 'falcon':
     model_name = "tiiuae/Falcon3-7B-Instruct"
+elif args.model_n == 'phi4':
+    model_name = "microsoft/phi-4"
+elif args.model_n == 'gemma':
+    model_name = "google/gemma-3-4b-it"
 else:
     print("Please provide a valid model name")
     sys.exit(1)
-
+    
 # Load model and tokenizer
 model, tokenizer = load_model(model_name, bnb_config)
 # print(tokenizer.model_max_length)
