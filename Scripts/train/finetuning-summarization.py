@@ -157,12 +157,13 @@ def formatting_prompts_func2(examples):
 
 
 if args.dataset_n == 'newsroom':
-    dataset = load_dataset("nlpatunt/newsroom-truncated", split = "train[:5000]")
+    num_train_epochs = 2    dataset = load_dataset("nlpatunt/newsroom-truncated", split = "train[:5000]")
     train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
     train_dataset = train_test_split["train"]
     test_dataset = train_test_split["test"]
     train_dataset = train_dataset.map(formatting_prompts_func2, batched = True,)
 elif args.dataset_n == 'scisumm':
+    num_train_epochs = 3
     dataset = load_dataset("nlpatunt/scisumm", split = "train")
     train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
     train_dataset = train_test_split["train"]
@@ -171,12 +172,6 @@ elif args.dataset_n == 'scisumm':
 else:
     print("Please provide a valid dataset name")   
 
-
-# dataset = load_dataset("nlpatunt/newsroom-truncated", split = "train[:5000]")
-# train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
-# train_dataset = train_test_split["train"]
-# test_dataset = train_test_split["test"]
-# train_dataset = train_dataset.map(formatting_prompts_func2, batched = True,)
 
 
 
@@ -218,7 +213,7 @@ trainer = SafeSFTTrainer(
         per_device_train_batch_size=2,
         gradient_accumulation_steps=4,
         warmup_steps=5,
-        num_train_epochs=2,
+        num_train_epochs= num_train_epochs,
         learning_rate=2e-4,
         fp16=not torch.cuda.is_bf16_supported(),
         bf16=torch.cuda.is_bf16_supported(),
@@ -317,11 +312,6 @@ df =pd.DataFrame({'statement':['If economic globalisation is inevitable, it shou
  'What goes on in a private bedroom between consenting adults is no business of the state.',
   'No one can feel naturally homosexual.',
  'These days openness about sex has gone too far.']})
-
-
-# if debug then use a small subset
-if DEBUG:
-    df = df.sample(10)
 
 
 # %%
