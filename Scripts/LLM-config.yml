@@ -1,4 +1,4 @@
-name: LLM
+name: polbias
 channels:
   - pytorch
   - nvidia
@@ -172,4 +172,4 @@ dependencies:
     - tzdata==2024.2
     - xxhash==3.5.0
     - yarl==1.18.3
-prefix: /home/sadia/anaconda3/envs/LLM
+prefix: /work/10196/sagnikrayc/ls6/anaconda3/envs/polbias

@@ -34,8 +34,13 @@
 
 # Any other commands must follow all #SBATCH directives...
 module load cuda/12.2
-${WORK}/anaconda3/envs/polbias/bin/python3.12 -c "import torch; print(f'cuda available: {torch.cuda.is_available()}')"
-date
+source ~/.bashrc
+
+export CUDA_HOME=/opt/apps/cuda/12.2
+export PATH=$CUDA_HOME/bin:$PATH
+export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
+#${WORK}/anaconda3/envs/polbias/bin/python3.12 finetuning-LLM-classification.py
+${WORK}/anaconda3/envs/polbias/bin/python3.12 -m bitsandbytes
 
 # Launch serial code...
 #./myprogram         # Do not use ibrun or any other MPI launcher
