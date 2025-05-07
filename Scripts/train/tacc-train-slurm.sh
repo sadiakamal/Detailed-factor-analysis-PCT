@@ -27,8 +27,7 @@
 #SBATCH -p gpu-a100-small  # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes (must be 1 for serial)
 #SBATCH -n 1               # Total # of mpi tasks (should be 1 for serial)
-#SBATCH -t 10:00:00        # Run time (hh:mm:ss)
-#SBATCH --gres=gpu:1       # number of GPUs
+#SBATCH -t 10:00:00        # Run time (hh:mm:ss)s
 #SBATCH --mail-type=all    # Send email at begin and end of job
 #SBATCH -A DBS24006 # Project/Allocation name (req'd if you have more than 1)
 #SBATCH --mail-user=sagnikraychoudhury@gmail.com
