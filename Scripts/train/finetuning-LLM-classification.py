@@ -1,6 +1,6 @@
 import os
 import argparse
-# os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 from random import randrange
 from functools import partial
 import torch
@@ -214,7 +214,7 @@ trainer = SafeSFTTrainer(
     dataset_text_field = 'text',
     data_collator=safe_data_collator,
     args=TrainingArguments(
-        per_device_train_batch_size=8,
+        per_device_train_batch_size=16,
         gradient_accumulation_steps=4,
         warmup_steps=5,
         num_train_epochs=2,

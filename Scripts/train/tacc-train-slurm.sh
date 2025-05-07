@@ -27,7 +27,8 @@
 #SBATCH -p gpu-a100-small  # Queue (partition) name
 #SBATCH -N 1               # Total # of nodes (must be 1 for serial)
 #SBATCH -n 1               # Total # of mpi tasks (should be 1 for serial)
-#SBATCH -t 01:30:00        # Run time (hh:mm:ss)
+#SBATCH -t 10:00:00        # Run time (hh:mm:ss)
+#SBATCH --gres=gpu:1       # number of GPUs
 #SBATCH --mail-type=all    # Send email at begin and end of job
 #SBATCH -A DBS24006 # Project/Allocation name (req'd if you have more than 1)
 #SBATCH --mail-user=sagnikraychoudhury@gmail.com
@@ -39,8 +40,6 @@ source ~/.bashrc
 export CUDA_HOME=/opt/apps/cuda/12.2
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-#${WORK}/anaconda3/envs/polbias/bin/python3.12 finetuning-LLM-classification.py
-${WORK}/anaconda3/envs/polbias/bin/python3.12 -m bitsandbytes
-
+${WORK}/anaconda3/envs/polbias/bin/python finetuning-LLM-classification.py --model_n mistral --dataset_n imdb
 # Launch serial code...
 #./myprogram         # Do not use ibrun or any other MPI launcher
