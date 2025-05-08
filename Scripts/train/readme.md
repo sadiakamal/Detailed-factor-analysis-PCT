@@ -8,10 +8,10 @@ QA datasets = [canadianQA, openR1]
 
 Conversational datasets = [finetome, pol-convo]
 
-Summarization datasets = [ newsroom, scisumm]
+Summarization datasets = [newsroom, scisumm]
 
 ---------- 
 
 example comand:
 
-python finetuning-LLM-QA --model_n falcon --dataset_n canadianQA
+python finetuning-LLM-QA.py --model_n falcon --dataset_n canadianQA
