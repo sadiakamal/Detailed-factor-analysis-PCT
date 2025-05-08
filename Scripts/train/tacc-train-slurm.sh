@@ -39,6 +39,7 @@ source ~/.bashrc
 export CUDA_HOME=/opt/apps/cuda/12.2
 export PATH=$CUDA_HOME/bin:$PATH
 export LD_LIBRARY_PATH=$CUDA_HOME/lib64:$LD_LIBRARY_PATH
-${WORK}/anaconda3/envs/polbias/bin/python finetuning-LLM-classification.py --model_n mistral --dataset_n imdb
+echo $1, $2
+${WORK}/anaconda3/envs/polbias/bin/python finetuning-LLM-classification.py --model_n $1 --dataset_n $2
 # Launch serial code...
 #./myprogram         # Do not use ibrun or any other MPI launcher
