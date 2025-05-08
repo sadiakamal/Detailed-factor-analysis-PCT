@@ -1,7 +1,7 @@
 import os
 from random import randrange
 from functools import partial
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
 import argparse
 import torch
 import sys
@@ -98,6 +98,7 @@ elif args.model_n == 'falcon':
 elif args.model_n == 'phi4':
     model_name = "microsoft/phi-4"
 elif args.model_n == 'gemma':
+    print(f"Loading {args.model_n}")
     model_name = "google/gemma-3-4b-it"
 else:
     print("Please provide a valid model name")
@@ -164,6 +165,7 @@ if args.dataset_n == 'newsroom':
     test_dataset = train_test_split["test"]
     train_dataset = train_dataset.map(formatting_prompts_func2, batched = True,)
 elif args.dataset_n == 'scisumm':
+    print(f"Loading Dataset {args.dataset_n}")
     num_train_epochs = 3
     dataset = load_dataset("nlpatunt/scisumm", split = "train")
     train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
@@ -194,8 +196,6 @@ class SafeSFTTrainer(SFTTrainer):
         return super().compute_loss(model, inputs, return_outputs=return_outputs, **kwargs)
 
 
-
-
 from transformers import DataCollatorForLanguageModeling
 def safe_data_collator(features):
     # Collate the batch normally first
@@ -203,29 +203,35 @@ def safe_data_collator(features):
     return collated  # Keep tensors on CPU, let Trainer handle transfer
 
 
+from trl import SFTConfig
+
+# Define the training configuration
+sft_config = SFTConfig(
+    max_seq_length=2048,
+    dataset_text_field="text",
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=4,
+    warmup_steps=5,
+    num_train_epochs=num_train_epochs,
+    learning_rate=2e-4,
+    fp16=not torch.cuda.is_bf16_supported(),
+    bf16=torch.cuda.is_bf16_supported(),
+    logging_steps=1,
+    optim="adamw_8bit",
+    weight_decay=0.01,
+    lr_scheduler_type="linear",
+    push_to_hub=True,
+    seed=3407,
+    output_dir=output_dir
+)
+
+# Initialize the trainer with the configuration
 trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
-    max_seq_length= 2048,
     train_dataset=train_dataset,
-    dataset_text_field = 'text',  # Adjust to correct dataset split
     data_collator=safe_data_collator,
-    args=TrainingArguments(
-        per_device_train_batch_size=2,
-        gradient_accumulation_steps=4,
-        warmup_steps=5,
-        num_train_epochs= num_train_epochs,
-        learning_rate=2e-4,
-        fp16=not torch.cuda.is_bf16_supported(),
-        bf16=torch.cuda.is_bf16_supported(),
-        logging_steps=1,
-        optim="adamw_8bit",
-        weight_decay=0.01,
-        lr_scheduler_type="linear",
-        push_to_hub=True,
-        seed=3407,
-        output_dir=output_dir,
-    ),
+    args=sft_config
 )
 
 # Start training

@@ -5,6 +5,10 @@ Llama-3.1-8B-Instruct_FineTome_FT_DEBUG/
 Llama-3.1-8B-Instruct_FineTome_FT_Opinions_DEBUG.csv
 Llama-3.1-8B-Instruct_FineTome_FT_evaluation_report_DEBUG.txt
 Llama-3.1-8B-Instruct_FineTome_FT_predictions_vs_references_DEBUG.csv
+Scripts/train/Gemma-FT-Newsarticles/*
+Scripts/train/Gemma-FT-Imdb/*
+Scripts/train/Gemma-FT-Scisumm/*
+Scripts/train/Phi4-FT-Newsarticles/*
 eval_output
 
 # Byte-compiled / optimized / DLL files
