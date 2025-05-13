@@ -1,7 +1,8 @@
 import os
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
 from random import randrange
+## If specific GPU is needed, uncomment the line below and set the desired GPU ID, this has to be done before importing torch
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 from functools import partial
 import torch
 import sys
@@ -38,16 +39,17 @@ args = parser.parse_args()
 
 
 from huggingface_hub import login
-# login(token='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') # Sadia
-login(token='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') # Rakib
+login(token='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') # Sadia
+# login(token='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') # Rakib
 
 output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
-
-
 
  # BitsAndBytesConfig int-4 config
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, llm_int8_enable_fp32_cpu_offload=True)
+# bnb_config = BitsAndBytesConfig(
+#     load_in_4bit=True,
+# )
 
 lora_config = LoraConfig(
     r = 16, # the dimension of the low-rank matrices
@@ -70,6 +72,7 @@ def load_model(model_name, bnb_config):
     # Get number of GPU device and set maximum memory
     n_gpus = torch.cuda.device_count()
     print('number of gpus',n_gpus)
+
     model = AutoModelForCausalLM.from_pretrained(
     model_name,
     quantization_config=bnb_config,
@@ -86,6 +89,7 @@ def load_model(model_name, bnb_config):
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "right"
+    
 
     return model, tokenizer
 
@@ -102,8 +106,9 @@ elif args.model_n == 'gemma':
 else:
     print("Please provide a valid model name")
     sys.exit(1)
-    
-# Load model and tokenizer
+
+
+# %%
 model, tokenizer = load_model(model_name, bnb_config)
 # print(tokenizer.model_max_length)
 # # %%
@@ -112,73 +117,80 @@ model = prepare_model_for_kbit_training(model)
 # %%
 model = get_peft_model(model, lora_config)
 
-# %%
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
 
-### Instruction:
+alpaca_prompt = """Below is an QA pair that describes a question, paired with an answer that provides that is the response for the question. Write a response that appropriately answers tthe question.
+
+
+### Input:
 {}
 
-### Article:
-{}
-
-### Political Leaning:
+### Response:
 {}"""
 
 EOS_TOKEN = tokenizer.eos_token
-
-#### For News Articles dataset
 def formatting_prompts_func(examples):
-    instructions = examples["instruction"]
-    inputs       = examples["input"]
-    outputs      = examples["output"]
+    inputs       = examples["Question"]
+    outputs      = examples["Answer"]
     texts = []
-    for instruction, input, output in zip(instructions, inputs, outputs):
+    for input, output in zip(inputs, outputs):
         # Must add EOS_TOKEN, otherwise your generation will go on forever!
-        text = alpaca_prompt.format(instruction, input, output) + EOS_TOKEN
+        text = alpaca_prompt.format(input, output) + EOS_TOKEN
         texts.append(text)
     return { "text" : texts, }
 
-alpaca_prompt2 = """Below are movie review and sentiment pair. Sentiment can be positive or negative. Write a response that appropriately completes the request.
-### Review:
-{}
-### Sentiment:
-{}"""
 
-def formatting_prompts_func_imdb(examples):
-    inputs = examples["text"]
-    labels = examples["label"]
+alpaca_prompt1 = """Below is an QA pair that describes a mathematical problem, paired with solution and answer that provides that is the response for the question. Write a response that appropriately answers the question.
+
+# ### Problem:
+# {}
+
+# ### Input:
+# {}
+
+# ### Response:
+# {}"""
+
+
+def formatting_prompts_func_R1(examples):
+    problems = examples["problem"]
+    inputs       = examples["solution"]
+    outputs      = examples["answer"]
     texts = []
-    
-    for input, label in zip(inputs, labels):
-        # Convert numerical label to text
-        sentiment = "positive" if label == 1 else "negative"
-        
-        # Format the prompt with review and sentiment
-        text = alpaca_prompt2.format(input, sentiment) + EOS_TOKEN
+    for problem, input, output in zip(problems, inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt1.format(problem, input, output) + EOS_TOKEN
         texts.append(text)
-        
-    return {"text": texts}
+    return { "text" : texts, }
 
-
-if args.dataset_n == 'newsarticles':
-    dataset = load_dataset('nlpatunt/NewsArticles-Baly-et-al',split = 'train[:30000]')
+if args.dataset_n == 'openR1':
+    # Load the dataset
+    dataset = load_dataset('open-r1/OpenR1-Math-220k', split='train[:10000]')
+    # Split the dataset into train and test sets
     train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
     train_dataset = train_subset["train"]
     test_dataset = train_subset["test"]
-    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
-elif args.dataset_n == 'imdb':
-    dataset = load_dataset("stanfordnlp/imdb", split="train")
-    train_dataset = load_dataset("stanfordnlp/imdb", split="train")
-    test_dataset = load_dataset("stanfordnlp/imdb", split="test")
-    train_dataset = train_dataset.map(formatting_prompts_func_imdb, batched=True)
+    train_dataset = train_dataset.map(formatting_prompts_func_R1, batched = True,)
+    num_train_epochs = 2
+elif args.dataset_n == 'canadianQA':
+    dataset = load_dataset('nlpatunt/canadian-parliamentary-qa',split = 'train[:10000]')
+    print(len(dataset))
+    train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
+    train_dataset = train_subset["train"]
+    test_dataset = train_subset["test"]
+    train_dataset = train_dataset.map(formatting_prompts_func, batched = True,) 
+    num_train_epochs = 4
 else:
     print("Please provide a valid dataset name")   
 
 
+# dataset = load_dataset('open-r1/OpenR1-Math-220k',split = 'train[:10000]')
+# train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
+# train_dataset = train_subset["train"]
+# test_dataset = train_subset["test"]
+
 
 print(train_dataset.column_names)
 
-# %%
 print(train_dataset[0])
 
 from trl import SFTTrainer
@@ -203,17 +215,16 @@ def safe_data_collator(features):
     return collated  # Keep tensors on CPU, let Trainer handle transfer
 
 
-
 from trl import SFTConfig
 
 # Define the training configuration
 sft_config = SFTConfig(
     max_seq_length=2048,
     dataset_text_field="text",
-    per_device_train_batch_size=1,
+    per_device_train_batch_size=2,
     gradient_accumulation_steps=4,
     warmup_steps=5,
-    num_train_epochs=2,
+    num_train_epochs=num_train_epochs,
     learning_rate=2e-4,
     fp16=not torch.cuda.is_bf16_supported(),
     bf16=torch.cuda.is_bf16_supported(),
@@ -225,7 +236,6 @@ sft_config = SFTConfig(
     seed=3407,
     output_dir=output_dir
 )
-
 
 # Initialize the trainer with the configuration
 trainer = SafeSFTTrainer(
@@ -241,7 +251,7 @@ trainer = SafeSFTTrainer(
 trainer_stats = trainer.train()
 
 # %%
-
+print(model.config)
 
 
 
@@ -370,5 +380,12 @@ df['opinion'] = opinions
 # Display the DataFrame with opinions
 print(df)
 
-print('saved')
+# %%
+df
+
+
+df.to_csv('Mistral-FT-openR1.csv',index= False)
+
+print('Training done')
+
 

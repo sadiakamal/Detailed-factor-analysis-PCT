@@ -14,4 +14,5 @@ Summarization datasets = [newsroom, scisumm]
 
 example comand:
 
-python finetuning-LLM-QA.py --model_n falcon --dataset_n canadianQA
+python finetuning-LLM-QA-rakib.py --model_n gemma --dataset_n canadianQA
+python finetuning-LLM-conversation-rakib.py --model_n gemma --dataset_n finetome

@@ -1,7 +1,8 @@
 import os
 from random import randrange
 from functools import partial
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
+os.environ["CUDA_VISIBLE_DEVICES"] = "1,0"
 import argparse
 import torch
 import sys
@@ -40,7 +41,8 @@ args = parser.parse_args()
 output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
 
 from huggingface_hub import login
-login(token='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') # Sadia
+# login(token='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') # Sadia
+login(token='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') # Rakib
 
 
  # BitsAndBytesConfig int-4 config
@@ -209,7 +211,7 @@ from trl import SFTConfig
 sft_config = SFTConfig(
     max_seq_length=2048,
     dataset_text_field="text",
-    per_device_train_batch_size=2,
+    per_device_train_batch_size=1,
     gradient_accumulation_steps=4,
     warmup_steps=5,
     num_train_epochs=num_train_epochs,
@@ -251,6 +253,10 @@ inputs = tokenizer.apply_chat_template(
     return_tensors = "pt",
 
 ).to("cuda")
+if isinstance(inputs, dict):
+    inputs = {k: v.to(model.device) for k, v in inputs.items()}
+else:
+    inputs = inputs.to(model.device)
 
 from transformers import TextStreamer
 text_streamer = TextStreamer(tokenizer, skip_prompt = True)

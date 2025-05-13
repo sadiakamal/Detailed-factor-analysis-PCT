@@ -1,7 +1,7 @@
 import os
-import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
 from random import randrange
+import argparse
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,2"
 from functools import partial
 import torch
 import sys
@@ -36,18 +36,18 @@ parser.add_argument("--model_n", type=str, required=True, help="The name of the 
 parser.add_argument("--dataset_n", type=str, required=True, help="The name of the dataset to use")
 args = parser.parse_args()
 
+output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
+
 
 from huggingface_hub import login
 # login(token='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') # Sadia
 login(token='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') # Rakib
 
-output_dir = f"{args.model_n.capitalize()}-FT-{args.dataset_n.capitalize()}"
-
-
 
  # BitsAndBytesConfig int-4 config
 bnb_config = BitsAndBytesConfig(
     load_in_4bit=True, bnb_4bit_use_double_quant=True, bnb_4bit_quant_type="nf4", bnb_4bit_compute_dtype=torch.bfloat16, llm_int8_enable_fp32_cpu_offload=True)
+
 
 lora_config = LoraConfig(
     r = 16, # the dimension of the low-rank matrices
@@ -102,11 +102,10 @@ elif args.model_n == 'gemma':
 else:
     print("Please provide a valid model name")
     sys.exit(1)
-    
-# Load model and tokenizer
+
 model, tokenizer = load_model(model_name, bnb_config)
-# print(tokenizer.model_max_length)
-# # %%
+print(tokenizer.model_max_length)
+
 model = prepare_model_for_kbit_training(model)
 
 # %%
@@ -118,15 +117,13 @@ alpaca_prompt = """Below is an instruction that describes a task, paired with an
 ### Instruction:
 {}
 
-### Article:
+### Input:
 {}
 
-### Political Leaning:
+### Response:
 {}"""
 
 EOS_TOKEN = tokenizer.eos_token
-
-#### For News Articles dataset
 def formatting_prompts_func(examples):
     instructions = examples["instruction"]
     inputs       = examples["input"]
@@ -138,48 +135,131 @@ def formatting_prompts_func(examples):
         texts.append(text)
     return { "text" : texts, }
 
-alpaca_prompt2 = """Below are movie review and sentiment pair. Sentiment can be positive or negative. Write a response that appropriately completes the request.
-### Review:
-{}
-### Sentiment:
-{}"""
 
-def formatting_prompts_func_imdb(examples):
-    inputs = examples["text"]
-    labels = examples["label"]
+finetune_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+
+### Instruction:
+{}
+
+### Input:
+{}
+
+### Response:
+{}"""
+def formatting_finetune_prompts(examples):
+    conversations = examples["conversations"]
     texts = []
-    
-    for input, label in zip(inputs, labels):
-        # Convert numerical label to text
-        sentiment = "positive" if label == 1 else "negative"
-        
-        # Format the prompt with review and sentiment
-        text = alpaca_prompt2.format(input, sentiment) + EOS_TOKEN
+
+    for convo in conversations:
+        # Extract the user instruction (first message)
+        instruction = convo[0]["value"]
+
+        # Extract the assistant's response (last message)
+        response = convo[-1]["value"]
+
+        # Extract the conversation history as input (excluding first and last turns)
+        input_text = "\n".join([turn["value"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
+
+        # Format the text using the Alpaca template
+        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
         texts.append(text)
-        
+
     return {"text": texts}
 
 
-if args.dataset_n == 'newsarticles':
-    dataset = load_dataset('nlpatunt/NewsArticles-Baly-et-al',split = 'train[:30000]')
+# def formatting_finetune_prompts(examples):
+#     conversations = examples["conversations"]
+#     texts = []
+
+#     # Counters
+#     total = 0
+#     skipped_role = 0
+#     skipped_structure = 0
+#     kept = 0
+
+#     for convo in conversations:
+#         total += 1
+#         formatted_convo = []
+
+#         # Normalize roles
+#         for turn in convo:
+#             role = turn["from"]
+#             if role == "human":
+#                 role = "user"
+#             elif role == "gpt":
+#                 role = "assistant"
+#             else:
+#                 continue
+#             formatted_convo.append({"role": role, "content": turn["value"]})
+
+#         # Reject if too short or doesn't start with "user"
+#         if len(formatted_convo) < 2 or formatted_convo[0]["role"] != "user":
+#             skipped_structure += 1
+#             continue
+
+#         # Reject if roles do not strictly alternate
+#         if any(formatted_convo[i]["role"] == formatted_convo[i + 1]["role"] for i in range(len(formatted_convo) - 1)):
+#             skipped_role += 1
+#             continue
+
+#         # Extract fields
+#         instruction = formatted_convo[0]["content"]
+#         response = formatted_convo[-1]["content"]
+#         input_text = "\n".join(
+#             [turn["content"] for turn in formatted_convo[1:-1]]
+#         ) if len(formatted_convo) > 2 else "N/A"
+
+#         # Format final string
+#         text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
+#         texts.append(text)
+#         kept += 1
+
+#     print(f"[Dataset Filtering] Total: {total}, Kept: {kept}, Skipped (structure): {skipped_structure}, Skipped (role): {skipped_role}")
+#     return {"text": texts}
+
+
+def formatting_finetune_prompts_political(examples):
+    conversations = examples["conversations"]
+    texts = []
+
+    for convo in conversations:
+        # Extract the user instruction (first message)
+        instruction = convo[0]["content"]
+
+        # Extract the assistant's response (last message)
+        response = convo[-1]["content"]
+
+        # Extract the conversation history as input (excluding first and last turns)
+        input_text = "\n".join([turn["content"] for turn in convo[1:-1]]) if len(convo) > 2 else "N/A"
+
+        # Format the text using the Alpaca template
+        text = finetune_prompt.format(instruction, input_text, response) + EOS_TOKEN
+        texts.append(text)
+
+    return {"text": texts}
+
+
+
+if args.dataset_n == 'finetome':
+    num_train_epochs = 2
+    dataset = load_dataset("mlabonne/FineTome-100k", split="train[:5000]")
+    train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
+    train_dataset = train_test_split["train"]
+    test_dataset = train_test_split["test"]
+    print(len(train_dataset))
+    train_dataset = train_dataset.map(formatting_finetune_prompts, batched = True,)
+    train_dataset = train_dataset.remove_columns([col for col in train_dataset.column_names if col != "text"])
+elif args.dataset_n == 'pol-convo':
+    num_train_epochs = 4
+    dataset = load_dataset('nlpatunt/Political-conversation',split = 'train')
     train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
     train_dataset = train_subset["train"]
     test_dataset = train_subset["test"]
-    train_dataset = train_dataset.map(formatting_prompts_func, batched=True)
-elif args.dataset_n == 'imdb':
-    dataset = load_dataset("stanfordnlp/imdb", split="train")
-    train_dataset = load_dataset("stanfordnlp/imdb", split="train")
-    test_dataset = load_dataset("stanfordnlp/imdb", split="test")
-    train_dataset = train_dataset.map(formatting_prompts_func_imdb, batched=True)
+    train_dataset = train_dataset.map(formatting_finetune_prompts_political, batched = True,)
 else:
-    print("Please provide a valid dataset name")   
+    print("Please provide a valid dataset name")  
 
 
-
-print(train_dataset.column_names)
-
-# %%
-print(train_dataset[0])
 
 from trl import SFTTrainer
 
@@ -203,17 +283,16 @@ def safe_data_collator(features):
     return collated  # Keep tensors on CPU, let Trainer handle transfer
 
 
-
 from trl import SFTConfig
 
 # Define the training configuration
 sft_config = SFTConfig(
     max_seq_length=2048,
     dataset_text_field="text",
-    per_device_train_batch_size=1,
+    per_device_train_batch_size=2,
     gradient_accumulation_steps=4,
     warmup_steps=5,
-    num_train_epochs=2,
+    num_train_epochs=num_train_epochs,
     learning_rate=2e-4,
     fp16=not torch.cuda.is_bf16_supported(),
     bf16=torch.cuda.is_bf16_supported(),
@@ -226,14 +305,13 @@ sft_config = SFTConfig(
     output_dir=output_dir
 )
 
-
 # Initialize the trainer with the configuration
 trainer = SafeSFTTrainer(
     model=model,
     processing_class=tokenizer,
     train_dataset=train_dataset,
     data_collator=safe_data_collator,
-    args=sft_config
+    args=sft_config,
 )
 
 
@@ -241,7 +319,19 @@ trainer = SafeSFTTrainer(
 trainer_stats = trainer.train()
 
 # %%
+print(model.config)
 
+
+
+inputs = tokenizer(
+[
+    alpaca_prompt.format(
+        "Continue the fibonnaci sequence.", # instruction
+        "1, 1, 2, 3, 5, 8", # input
+        "", # output - leave this blank for generation!
+    )
+], return_tensors = "pt")
+inputs = {k: v.to(model.device) for k, v in inputs.items()}
 
 
 
@@ -310,7 +400,6 @@ df =pd.DataFrame({'statement':['If economic globalisation is inevitable, it shou
  'These days openness about sex has gone too far.']})
 
 
-
 import re
 opinions = []  # List to store opinions
 
@@ -349,6 +438,7 @@ for index, row in df.iterrows():
 
     # Get the generated opinion from the streamer
     response= tokenizer.batch_decode(outputs, skip_special_tokens=True)[0]
+    print('before cleaning')
      # **Step 1: Remove metadata like 'user', 'assistant', and prompts**
     # Find the index where the actual response starts
     split_response = re.split(r"\b(?:user|assistant)\b[:\-]?\s*", response, flags=re.IGNORECASE)
@@ -362,13 +452,9 @@ for index, row in df.iterrows():
 
 
 
-    # In case the model does not respond as exp
 
-# %%
 df['opinion'] = opinions
 
 # Display the DataFrame with opinions
 print(df)
-
-print('saved')
-
+print('training done')

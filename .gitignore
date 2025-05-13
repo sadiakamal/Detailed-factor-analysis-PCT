@@ -9,6 +9,10 @@ Scripts/train/Gemma-FT-Newsarticles/*
 Scripts/train/Gemma-FT-Imdb/*
 Scripts/train/Gemma-FT-Scisumm/*
 Scripts/train/Phi4-FT-Newsarticles/*
+Scripts/train/Gemma-FT-Canadianqa/*
+Scripts/train/Gemma-FT-Finetome/*
+Scripts/train/Gemma-FT-Newsroom/*
+Scripts/train/Gemma-FT-Openr1/*
 eval_output
 
 # Byte-compiled / optimized / DLL files
