@@ -30,17 +30,23 @@ for k in [x for x in list(df) if not x.startswith("output")]:
 
 def factorial_anova(_filter_df: pd.DataFrame,
                     factors:  List[str]=["fine_tune_dataset", "n_beams", "tmp", "top_k", "prompt"],
-                    predicted_var: str = "output_x"):
+                    predicted_var: str = "output_x",
+                    base_v_finetuned: bool=True):
     """
     do a factorial anova on the provided dataframe.
     :param _filter_df: output from a model
     :param factors: list of factors (column names in the df)
     :param predicted_var: predicted variable (column name in the df)
+    :param base_v_finetuned: instead of saying which dataset it is finetuned on, we will just have 2 values
+    for this factor -- whether it is finetuned or not
     :return:
     """
+    if base_v_finetuned:
+        mapping = {'Base': 'Base'}
+        _filter_df.loc[:, 'fine_tune_dataset'] = _filter_df['fine_tune_dataset'].map(mapping).fillna('fine_tuned')
     formula = f"{predicted_var} ~" + ' + '.join([f'C({col})' for col in factors])
     model = ols(formula, data=_filter_df).fit()
-    anova_table = sm.stats.anova_lm(model, typ=2)
+    anova_table = sm.stats.anova_lm(model, typ=3)
     anova_table['eta_sq'] = anova_table['sum_sq'] / anova_table['sum_sq'].sum()
     return anova_table
 
