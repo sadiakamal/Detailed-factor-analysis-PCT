@@ -44,7 +44,7 @@ Residual              1123.822830  711.0       NaN           NaN  0.702271
 ==============================
 ```
 
-Using Levene's test (Null hypothesis is that the in-group variance is identical) we can see that the unadjusted 1-way anova is not the best approach, so we use Welch's Anova that adjusts the degrees of freedom in the calculation of the F-statistic to account for unequal variances.
+Using Levene's test (Null hypothesis is that the in-group variance is identical) we can see that the unadjusted 1-way anova is not the best approach (as the homoscedasticity assumption is violated), so we use Welch's Anova that adjusts the degrees of freedom in the calculation of the F-statistic to account for unequal variances.
 
 ```commandline
 Predicted_var: Social Libertarian/Authoritarian, Model: Llama3
