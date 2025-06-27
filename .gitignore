@@ -13,6 +13,7 @@ Scripts/train/Gemma-FT-Canadianqa/*
 Scripts/train/Gemma-FT-Finetome/*
 Scripts/train/Gemma-FT-Newsroom/*
 Scripts/train/Gemma-FT-Openr1/*
+Scripts/train/Gemma-FT-Pol-convo/*
 eval_output
 
 # Byte-compiled / optimized / DLL files
