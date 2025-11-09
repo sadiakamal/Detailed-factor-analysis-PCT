@@ -1,6 +1,6 @@
 ### To execute these pyhton scripts you need to pass model name and dataset name as arguments, note: datasets are different for each script:
 
-model_n = [llama3,mistral,falcon, phi4,gemma]
+model_n = [llama3,mistral,falcon]
 
 Classification datasets = [newsarticles,imdb]
 
@@ -12,7 +12,6 @@ Summarization datasets = [newsroom, scisumm]
 
 ---------- 
 
-example comand:
+To execute run the following:
 
-python finetuning-LLM-QA-rakib.py --model_n gemma --dataset_n canadianQA
-python finetuning-LLM-conversation-rakib.py --model_n gemma --dataset_n pol-convo
+python train-conversation.py --model_n mistral --dataset_n pol-convo
