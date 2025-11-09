@@ -1,1 +1,0 @@
-## TODO: Build eval pipeline as generation but for classification metrics

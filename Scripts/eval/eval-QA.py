@@ -1,5 +1,6 @@
 import os
 import csv
+import re
 from random import randrange
 import argparse
 from functools import partial
@@ -18,6 +19,7 @@ from transformers import (AutoModelForCausalLM,
                           logging,
                           set_seed)
 from transformers import AutoTokenizer, AutoModelForSequenceClassification, TextStreamer
+from transformers import LlamaForSequenceClassification, LlamaTokenizer, LlamaModel
 from peft import LoraConfig, prepare_model_for_kbit_training, get_peft_model
 import bitsandbytes as bnb
 
@@ -53,6 +55,7 @@ lora_config = LoraConfig(
     bias = 'none', # wether to train bias weights, set to 'none' for attention layers
     task_type = 'CAUSAL_LM'
 )
+
 def load_model(model_name, bnb_config):
     """
     Loads model and model tokenizer
@@ -63,24 +66,22 @@ def load_model(model_name, bnb_config):
 
     # Get number of GPU device and set maximum memory
     n_gpus = torch.cuda.device_count()
-    print('number of gpus',n_gpus)
+    print('number of gpus', n_gpus)
     model = AutoModelForCausalLM.from_pretrained(
     model_name,
-    quantization_config=bnb_config,
+    # quantization_config=bnb_config,
     device_map="auto",
     # device_map = "balanced",
-)
+    )
 
     # Load model tokenizer with the user authentication token
-    tokenizer = AutoTokenizer.from_pretrained(model_name, token = True)
+    tokenizer = AutoTokenizer.from_pretrained(model_name, use_auth_token=True)
     
-
     # Set padding token as EOS token
     if tokenizer.pad_token is None:
         tokenizer.pad_token_id = tokenizer.eos_token_id
         tokenizer.pad_token = tokenizer.eos_token
         tokenizer.padding_side = "right"
-    #tokenizer.pad_token = tokenizer.eos_token
 
     return model, tokenizer
 
@@ -88,10 +89,8 @@ model_name = args.model_name
 model, tokenizer = load_model(model_name, bnb_config)
 
 
-alpaca_prompt = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
+alpaca_prompt = """Below is an QA pair that describes a question, paired with an answer that provides that is the response for the question. Write a response that appropriately answers the question no explanation.
 
-### Instruction:
-{}
 
 ### Input:
 {}
@@ -100,102 +99,170 @@ alpaca_prompt = """Below is an instruction that describes a task, paired with an
 {}"""
 
 EOS_TOKEN = tokenizer.eos_token
+def formatting_prompts_func(examples):
+    inputs       = examples["Question"]
+    outputs      = examples["Answer"]
+    texts = []
+    for input, output in zip(inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt.format(input, output) + EOS_TOKEN
+        texts.append(text)
+    return { "text" : texts, }
 
-if args.dataset_name == 'finetome':
-    dataset = load_dataset("mlabonne/FineTome-100k", split="train[:5000]")
-    train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
-    train_dataset = train_test_split["train"]
-    test_dataset = train_test_split["test"]
-    predictions = []
-    references = []
-    start_time = time.time()
 
-    for example in test_dataset:
-        instruction = example["conversations"][0]["value"]
-        input_text = "\n".join([turn["value"] for turn in example["conversations"][1:-1]]) if len(example["conversations"]) > 2 else "N/A"
-        reference = example["conversations"][-1]["value"]
-        # print('reference',reference)
+alpaca_prompt1 = """Below is an QA pair that describes a mathematical problem, paired with solution and answer that provides that is the response for the question. Write a response that appropriately answers the question only.
 
-        prompt = alpaca_prompt.format(instruction, input_text, "")
-        inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        outputs = model.generate(**inputs, max_new_tokens=500, pad_token_id=tokenizer.eos_token_id)
-        prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
+# ### Problem:
+# {}
 
-        # Clean up the prediction to get just the response part (after "### Response:")
-        response_start = prediction.find("### Response:")
-        if response_start != -1:
-            prediction = prediction[response_start + len("### Response:"):].strip()
-        #print("prediction\n",prediction)
-        #print('reference\n',reference)
+# ### Input:
+# {}
 
-        predictions.append(prediction)
-        references.append([reference]) 
-    print(len(train_dataset))
-    end_time = time.time()    # Record end time
-    generation_time = end_time - start_time
-    print(f"Generation time: {generation_time:.2f} seconds")
+# ### Response:
+# {}"""
 
-elif args.dataset_name == 'pol-convo':
-    dataset = load_dataset('nlpatunt/Political-conversation',split = 'train')
+
+def formatting_prompts_func_R1(examples):
+    problems = examples["problem"]
+    inputs       = examples["solution"]
+    outputs      = examples["answer"]
+    texts = []
+    for problem, input, output in zip(problems, inputs, outputs):
+        # Must add EOS_TOKEN, otherwise your generation will go on forever!
+        text = alpaca_prompt1.format(problem, input, output) + EOS_TOKEN
+        texts.append(text)
+    return { "text" : texts, }
+
+def clean_prediction(prediction: str) -> str:
+    """
+    Extract clean answer from model prediction.
+    Prioritize LaTeX or numeric answers.
+    """
+    # Remove leading label text like "Answer:", "### Response:", etc.
+    prediction = prediction.strip()
+
+    # Try extracting LaTeX or boxed answers
+    match = re.search(r"\$\s*([^$]+)\s*\$", prediction)  # anything inside single dollar signs
+    if match:
+        return f"${match.group(1).strip()}$"
+
+    # Try extracting boxed answer
+    match = re.search(r"\\boxed\{([^}]+)\}", prediction)
+    if match:
+        return match.group(1).strip()
+
+    # Try extracting number after common patterns
+    match = re.search(r"Answer:.*?(-?\d+(?:\.\d+)?)", prediction)
+    if match:
+        return match.group(1)
+
+    # Fallback to the last number or expression
+    match = re.findall(r"-?\d+(?:\.\d+)?|\$[^\$]+\$", prediction)
+    if match:
+        return match[-1].strip()
+
+    return prediction.strip()
+
+
+if args.dataset_name == 'openR1':
+    # Load the dataset
+    dataset = load_dataset('open-r1/OpenR1-Math-220k', split='train[:10000]')
+    # Split the dataset into train and test sets
     train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
     train_dataset = train_subset["train"]
     test_dataset = train_subset["test"]
+    test_dataset = test_dataset.select(range(1000))
+    # print(test_dataset[0])
+    predictions = []
+    references = []
+
+    for example in test_dataset:
+        problem = example["problem"]
+        input_text = example["solution"]
+        reference = example["answer"]
+        prompt = alpaca_prompt1.format(problem, input_text, "")
+        inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
+        outputs = model.generate(**inputs, max_new_tokens=50,pad_token_id=tokenizer.eos_token_id)
+        prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
+       
+
+        # Clean up the prediction to get just the response part (after "### Response:")
+        response_start = prediction.find("### Response:")
+        if response_start != -1:
+            prediction = prediction[response_start + len("### Response:"):].strip()
+            # match = re.search(r"#\s*\*\*Answer:\*\*\s*#?\s*(.*?)$", prediction, re.DOTALL)
+            # if match:
+            #     prediction = match.group(1).strip()
+            # else:
+            #     prediction = prediction.strip()
+        cleaned_pred = clean_prediction(prediction)
+        predictions.append(cleaned_pred)
+
+        #predictions.append(prediction)
+        references.append([reference])
+        print('prediction\n',cleaned_pred) 
+        print('reference\n', reference)
+    # train_dataset = train_dataset.map(formatting_prompts_func_R1, batched = True,)
+    
+elif args.dataset_name == 'canadianQA':
+    dataset = load_dataset('nlpatunt/canadian-parliamentary-qa',split = 'train[:10000]')
+    print(len(dataset))
+    train_subset = dataset.train_test_split(test_size=0.2, shuffle=True, seed=42)
+    train_dataset = train_subset["train"]
+    test_dataset = train_subset["test"]
+    test_dataset = test_dataset.select(range(1000))
+    print(len(test_dataset))
+    # print(test_dataset[0])
     predictions = []
     references = []
     for example in test_dataset:
-        instruction = example["conversations"][0]["content"]
-        input_text = "\n".join([turn["content"] for turn in example["conversations"][1:-1]]) if len(example["conversations"]) > 2 else "N/A"
-        reference = example["conversations"][-1]["content"]
-        ref_tokens = tokenizer(reference, return_tensors="pt", truncation=True, max_length=500)
-        reference = tokenizer.decode(ref_tokens["input_ids"][0], skip_special_tokens=True)
-
-        prompt = alpaca_prompt.format(instruction, input_text, "")
+        input_text = example["Question"]
+        reference = example["Answer"]
+        prompt = alpaca_prompt.format(input_text, "")
         inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
-        # start_time = time.time()
-        outputs = model.generate(**inputs, max_new_tokens=500,pad_token_id=tokenizer.eos_token_id)
-        # end_time = time.time()    # Record end time
-        # generation_time = end_time - start_time
-        #print(f"Generation time: {generation_time:.2f} seconds")
+        outputs = model.generate(**inputs, max_new_tokens=200,pad_token_id=tokenizer.eos_token_id)
         prediction = tokenizer.decode(outputs[0], skip_special_tokens=True)
 
         # Clean up the prediction to get just the response part (after "### Response:")
         response_start = prediction.find("### Response:")
         if response_start != -1:
             prediction = prediction[response_start + len("### Response:"):].strip()
-        #print('prediction',prediction)
-        #print('reference',reference)
-        #print('prediction\n',prediction)
+        
+        print('prediction\n', prediction)
+        print('reference\n', reference)
 
         predictions.append(prediction)
-        references.append([reference]) 
+        references.append([reference])
+    # train_dataset = train_dataset.map(formatting_prompts_func, batched = True,
 else:
-    print("Please provide a valid dataset name")  
+    print("Please provide a valid dataset name")   
 
+
+# model_id = args.model_name.split('/')[-1]  # Extract the part after the last '/'
+# filename = f"{model_id.capitalize()}-Eval"
 model_id = args.model_name.split('/')[-1]  # Extract the part after the last '/'
-filename = "evaluation_results_conversation1.csv"
+filename = "evaluation_results_QA.csv"
 
 # Load the evaluation metrics
 bleu = evaluate.load("bleu")
 rouge = evaluate.load("rouge")
 bertscore = evaluate.load("bertscore")
+exact_match_metric = evaluate.load("exact_match")
 
+
+# Compute exact match score
+flattened_references = [ref[0] for ref in references]  # Extracting the first element from each list
+
+# Compute the exact match score
+em_results = exact_match_metric.compute(predictions=predictions, references=flattened_references)
+print(f"Exact Match Score on evaluation set: {em_results['exact_match']:.4f}")
+
+# Save results to file
 test_dataset = test_dataset.add_column('ref', references)
 test_dataset = test_dataset.add_column('pred', predictions)
 output_filename = f"./Eval-predictions/{model_id}_{args.dataset_name}_predictions.csv"
 test_dataset.to_csv(f"{output_filename}", index=False)
 
-# Define the prompt format (same as your fine-tuning format)
-finetune_prompt_eval = """Below is an instruction that describes a task, paired with an input that provides further context. Write a response that appropriately completes the request.
-
-### Instruction:
-{}
-
-### Input:
-{}
-
-### Response:
-{}"""
-EOS_TOKEN = tokenizer.eos_token
 
 
 bleu_results = bleu.compute(predictions=predictions, references=references)
@@ -219,6 +286,4 @@ row = {
     "BERTScore_F1": bertscore_f1
 }
 
-# Check if file exists
-file_exists = os.path.isfile(filename)
 

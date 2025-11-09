@@ -1,7 +1,7 @@
 import os
+import csv
 from random import randrange
 import argparse
-os.environ["CUDA_VISIBLE_DEVICES"] = "1,2"
 from functools import partial
 import torch
 import sys
@@ -34,7 +34,7 @@ from datasets import load_dataset
 import evaluate
 from datasets import load_dataset
 from huggingface_hub import login
-login(token='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') # Sadia
+login(token='HF-TOKEN') 
 from peft import PeftModel, PeftConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
@@ -67,6 +67,7 @@ def load_model(model_name, bnb_config):
     print('number of gpus',n_gpus)
     model = AutoModelForCausalLM.from_pretrained(
     model_name,
+    quantization_config=bnb_config,
     device_map="auto",
     # device_map = "balanced",
 )
@@ -141,11 +142,13 @@ if args.dataset_name == 'newsroom':
         article = example["text"]
         reference = example["summary"]
         # print('reference',reference)
+        ref_tokens = tokenizer(reference, return_tensors="pt", truncation=True, max_length=512)
+        reference = tokenizer.decode(ref_tokens["input_ids"][0], skip_special_tokens=True)
 
         prompt = alpaca_prompt2.format(article, "")
         inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
         # start_time = time.time()
-        outputs = model.generate(**inputs, max_new_tokens=512)
+        outputs = model.generate(**inputs, max_new_tokens=512,pad_token_id=tokenizer.eos_token_id)
         # end_time = time.time()    # Record end time
         # generation_time = end_time - start_time
         #print(f"Generation time: {generation_time:.2f} seconds")
@@ -162,7 +165,7 @@ elif args.dataset_name == 'scisumm':
     dataset = load_dataset("nlpatunt/scisumm", split = "train")
     train_test_split = dataset.train_test_split(test_size=0.2, seed=42)
     train_dataset = train_test_split["train"]
-    test_dataset = train_test_split["test"]
+    test_dataset = train_test_split["test"]  # Select 1000 samples for testing
     print(len(test_dataset))
     # test_dataset = test_dataset.select(range(10))  
     # print(len(test_dataset))
@@ -171,12 +174,14 @@ elif args.dataset_name == 'scisumm':
     for example in test_dataset:
         paper = example["research_paper"]
         reference = example["summary"]
-        # print('reference',reference)
+        ref_tokens = tokenizer(reference, return_tensors="pt", truncation=True, max_length=512)
+        reference = tokenizer.decode(ref_tokens["input_ids"][0], skip_special_tokens=True)
+        #print('reference',reference)
 
         prompt = alpaca_prompt.format(paper, "")
         inputs = tokenizer(prompt, return_tensors="pt").to("cuda")
         # start_time = time.time()
-        outputs = model.generate(**inputs, max_new_tokens=512)
+        outputs = model.generate(**inputs, max_new_tokens=512,pad_token_id=tokenizer.eos_token_id)
         # end_time = time.time()    # Record end time
         # generation_time = end_time - start_time
         #print(f"Generation time: {generation_time:.2f} seconds")
@@ -186,6 +191,7 @@ elif args.dataset_name == 'scisumm':
         response_start = prediction.find("### Summary:")
         if response_start != -1:
             prediction = prediction[response_start + len("### Summary:"):].strip()
+        #print('prediction\n',prediction)
         predictions.append(prediction)
         references.append([reference])
 else:
@@ -194,25 +200,41 @@ else:
 
 
 model_id = args.model_name.split('/')[-1]  # Extract the part after the last '/'
-filename = f"{model_id.capitalize()}-Eval"
+filename = "evaluation_results_summarization.csv"
+
+
+test_dataset = test_dataset.add_column('ref', references)
+test_dataset = test_dataset.add_column('pred', predictions)
+output_filename = f"./Eval-predictions/{model_id}_{args.dataset_name}_predictions.csv"
+test_dataset.to_csv(f"{output_filename}", index=False)
 
 
 # Load the evaluation metrics
 bleu = evaluate.load("bleu")
 rouge = evaluate.load("rouge")
-
-
-# Compute BLEU score
-
-test_dataset = test_dataset.add_column('ref', references)
-test_dataset = test_dataset.add_column('pred', predictions)
-
-test_dataset.to_csv(f"{filename}.csv", index=False)
+bertscore = evaluate.load("bertscore")
 
 bleu_results = bleu.compute(predictions=predictions, references=references)
 print(f"BLEU score on evaluation set: {bleu_results}")
 rouge_results = rouge.compute(predictions=predictions, references=references)
 print(f"ROUGE score on evaluation set: {rouge_results}")
-with open(f"{filename}.txt", 'w') as f:
-    f.write(f"BLEU score on evaluation set: {bleu_results}\n")
-    f.write(f"ROUGE score on evaluation set: {rouge_results}\n")
+bertscore_results = bertscore.compute(predictions=predictions, references=references, lang="en")
+bertscore_precision = float(np.mean(bertscore_results["precision"]))
+bertscore_recall = float(np.mean(bertscore_results["recall"]))
+bertscore_f1 = float(np.mean(bertscore_results["f1"]))
+print(f"BERTScore on evaluation set: {bertscore_precision}, {bertscore_recall}, {bertscore_f1}")
+row = {
+    "model_id": model_id,
+    "dataset_name": args.dataset_name,
+    "BLEU": bleu_results["bleu"],
+    "ROUGE-1": rouge_results["rouge1"],
+    "ROUGE-2": rouge_results["rouge2"],
+    "ROUGE-L": rouge_results["rougeL"],
+    "BERTScore_P": bertscore_precision,
+    "BERTScore_R": bertscore_recall,
+    "BERTScore_F1": bertscore_f1
+}
+
+# Check if file exists
+file_exists = os.path.isfile(filename)
+
