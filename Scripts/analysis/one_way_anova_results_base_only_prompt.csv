@@ -1,0 +1,5 @@
+Decoding Param,Model,F-stat X,p-value X,F-stat Y,p-value Y
+prompt,gemma,8.18e+02,1.65e-30,1.02e+02,6.38e-19
+,Llama3,1.76e+00,1.22e-01,3.50e+01,6.08e-13
+,Falcon,1.53e+00,1.98e-01,3.40e+00,1.22e-02
+,Mistral,1.53e+00,1.98e-01,2.04e+01,1.74e-07

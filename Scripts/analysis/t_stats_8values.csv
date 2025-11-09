@@ -1,0 +1,5 @@
+model,t-stat-equality,p-value,t-stat-nation,p-value,t-stat-liberty,p-value,t-stat-tradition,p-value
+Gemma,3.45e+00,7.14e-04,-8.36e+00,1.31e-13,3.90e+00,1.37e-04,-7.22e+00,1.88e-11
+Llama,9.21e+00,6.34e-16,-1.10e+01,2.74e-20,4.72e+00,5.88e-06,4.73e+00,3.61e-06
+Falcon,2.14e+00,3.50e-02,5.70e+00,6.29e-08,-1.27e+01,3.72e-30,5.38e+00,2.23e-07
+Mistral,1.73e+01,2.79e-45,-5.69e+00,6.91e-08,6.76e+00,3.08e-10,1.87e-01,8.52e-01
